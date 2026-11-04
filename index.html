@@ -227,11 +227,6 @@
           <div class="brand-sub">Bệnh viện Đa khoa Thủ Đức · Cổng theo dõi công việc</div>
         </div>
       </div>
-      <div class="top-actions">
-        <button class="button" id="export-button" type="button" title="Tải dữ liệu công việc dạng JSON">Xuất dữ liệu</button>
-        <button class="button" id="import-button" type="button">Nhập dữ liệu</button>
-        <input class="hidden" id="import-file" type="file" accept="application/json,.json">
-      </div>
     </header>
 
     <main class="main">
@@ -244,7 +239,6 @@
         <div>
           <div class="eyebrow">Bảng điều hành</div>
           <h1>Theo dõi công việc KPI</h1>
-          <p class="intro">Cập nhật tiến độ, nội dung thực hiện và đề xuất của từng đầu việc. Dữ liệu được lưu trên trình duyệt này; dùng Xuất/Nhập dữ liệu để sao lưu hoặc chuyển dữ liệu.</p>
         </div>
         <div class="toolbar">
           <button class="button primary" id="add-button" type="button">＋ Thêm công việc</button>
@@ -282,7 +276,7 @@
               <select class="field-control" id="group-filter" aria-label="Lọc theo nhóm">
                 <option value="">Tất cả nhóm</option>
                 <option value="1">Nhóm 1</option><option value="2">Nhóm 2</option><option value="3">Nhóm 3</option>
-                <option value="4">Nhóm 4</option><option value="5">Nhóm 5</option>
+                <option value="5">Nhóm 5</option>
               </select>
               <select class="field-control" id="status-filter" aria-label="Lọc theo trạng thái">
                 <option value="">Tất cả trạng thái</option>
@@ -333,7 +327,6 @@
             <option value="1">Nhóm 1 · KPI theo vị trí việc làm</option>
             <option value="2">Nhóm 2 · KPI kết hợp FMFT</option>
             <option value="3">Nhóm 3 · KPI không dùng FMFT</option>
-            <option value="4">Nhóm 4 · Danh mục công việc chuẩn</option>
             <option value="5">Nhóm 5 · Đề tài nghiên cứu</option>
           </select>
         </div>
@@ -387,6 +380,7 @@
     (() => {
       "use strict";
       const STORAGE_KEY = "thuduc-kpi-dashboard-v1";
+      const EXCLUDED_GROUPS = new Set([4]);
       const seedTasks = [
         {
           id: "g1-strategy", group: 1, title: "Rà soát chiến lược Bệnh viện và kế hoạch công tác năm 2026",
@@ -570,7 +564,7 @@
       function loadTasks() {
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
-          if (!saved) return seedTasks.map(task => ({ ...task }));
+          if (!saved) return trackedTasks(seedTasks.map(task => ({ ...task })));
           const parsed = JSON.parse(saved);
           if (!Array.isArray(parsed)) throw new Error("Dữ liệu lưu không phải danh sách.");
           const normalized = parsed.filter(task => task && typeof task.id === "string")
@@ -598,14 +592,18 @@
                 ].join("\n")
               });
             });
-            return detailedTasks;
+            return trackedTasks(detailedTasks);
           }
-          return normalized;
+          return trackedTasks(normalized);
         } catch (error) {
           console.error("Không thể đọc dữ liệu dashboard:", error);
           window.setTimeout(() => showToast("Không đọc được dữ liệu lưu. Hãy thử nhập bản sao lưu JSON."), 0);
-          return seedTasks.map(task => ({ ...task }));
+          return trackedTasks(seedTasks.map(task => ({ ...task })));
         }
+      }
+
+      function trackedTasks(items) {
+        return items.filter(task => !EXCLUDED_GROUPS.has(Number(task.group)));
       }
 
       function normalizeTask(task) {
@@ -714,7 +712,6 @@
           1: "Chuẩn hóa tài liệu và khung năng lực",
           2: "KPI theo khung FMFT",
           3: "KPI theo lý thuyết và hướng đi mới",
-          4: "Xây dựng danh mục công việc chuẩn",
           5: "Đề tài nghiên cứu khoa học cấp Thành phố"
         };
         const groupedTasks = new Map();
@@ -916,45 +913,6 @@
         closeForm();
         render();
         showToast("Đã xóa công việc.");
-      });
-
-      document.getElementById("export-button").addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `du-lieu-dashboard-kpi-${new Date().toISOString().slice(0, 10)}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-      });
-
-      document.getElementById("import-button").addEventListener("click", () => document.getElementById("import-file").click());
-      document.getElementById("import-file").addEventListener("change", async event => {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
-        try {
-          const parsed = JSON.parse(await file.text());
-          if (!Array.isArray(parsed) || parsed.some(task =>
-            !task || typeof task.title !== "string" || !task.title.trim()
-            || !validStatus(task.status) || !Number.isFinite(Number(task.progress))
-            || Number(task.progress) < 0 || Number(task.progress) > 100
-          )) throw new Error("Tệp phải là danh sách công việc JSON hợp lệ.");
-          tasks = parsed.map(task => ({
-            ...normalizeTask({
-              ...task,
-              id: String(task.id || `task-${Date.now()}-${Math.random()}`),
-              title: task.title.trim()
-            })
-          }));
-          if (!persist()) return;
-          render();
-          showToast("Đã nhập dữ liệu công việc.");
-        } catch (error) {
-          console.error("Không thể nhập dữ liệu dashboard:", error);
-          showToast(`Không thể nhập dữ liệu: ${error.message}`);
-        } finally {
-          event.target.value = "";
-        }
       });
 
       render();
