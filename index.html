@@ -95,6 +95,24 @@
     .field-control:focus, textarea:focus { border-color: #80ae9e; box-shadow: 0 0 0 3px #eaf4ef; }
     .search { width: 190px; }
     .work-list { display: grid; gap: 12px; padding: 15px; }
+    .group-list { display: grid; gap: 10px; padding: 15px; }
+    .task-group { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    .task-group[open] { border-color: #cbd9d3; }
+    .group-summary { display: grid; grid-template-columns: minmax(210px, 1fr) minmax(120px, 180px) auto; align-items: center; gap: 18px; padding: 15px 17px; cursor: pointer; list-style: none; }
+    .group-summary::-webkit-details-marker { display: none; }
+    .group-summary::marker { content: ""; }
+    .group-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
+    .group-number { width: 36px; height: 36px; display: grid; flex: 0 0 36px; place-items: center; border-radius: 11px; color: var(--green); background: var(--mint); font-size: 13px; font-weight: 800; }
+    .task-group[open] .group-number { color: white; background: var(--green); }
+    .group-title { margin: 0; font-size: 14px; line-height: 1.4; }
+    .group-subtitle { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .group-progress { min-width: 0; }
+    .group-progress .progress-caption { margin-bottom: 6px; }
+    .group-stats { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+    .group-chevron { display: inline-block; margin-left: 5px; color: var(--muted); transition: transform .18s ease; }
+    .task-group[open] .group-chevron { transform: rotate(180deg); }
+    .group-tasks { display: grid; gap: 10px; padding: 0 12px 12px; }
+    .group-tasks .work-card { background: #fff; }
     .work-card { padding: 17px; border: 1px solid var(--line); border-radius: 12px; }
     .work-card:hover { border-color: #c9d8d2; }
     .work-top { display: flex; justify-content: space-between; gap: 18px; }
@@ -184,7 +202,12 @@
       .panel-head { align-items: flex-start; flex-direction: column; padding: 15px; }
       .filters { width: 100%; }
       .search { flex: 1; width: auto; min-width: 120px; }
-      .work-list { padding: 10px; }
+      .group-list { padding: 10px; }
+      .group-summary { grid-template-columns: 1fr auto; gap: 9px; padding: 13px; }
+      .group-progress { grid-column: 1 / -1; grid-row: 2; }
+      .group-stats { grid-column: 1 / -1; justify-content: flex-start; }
+      .group-summary > .group-chevron { grid-column: 2; grid-row: 1; align-self: center; }
+      .group-tasks { padding: 0 8px 8px; }
       .work-card { padding: 14px; }
       .work-top { flex-direction: column; gap: 13px; }
       .progress-block { width: 100%; flex-basis: auto; }
@@ -253,20 +276,26 @@
             <h2 class="panel-title">Danh sách công việc</h2>
             <p class="panel-desc">Đầu việc được tách theo nội dung biên bản; mỗi nhóm có thể ghi tiến độ, đề xuất và nhật ký báo cáo.</p>
           </div>
-          <div class="filters">
-            <input class="field-control search" id="search-input" type="search" placeholder="Tìm công việc, người phụ trách…" aria-label="Tìm công việc">
-            <select class="field-control" id="group-filter" aria-label="Lọc theo nhóm">
-              <option value="">Tất cả nhóm</option>
-              <option value="1">Nhóm 1</option><option value="2">Nhóm 2</option><option value="3">Nhóm 3</option>
-              <option value="4">Nhóm 4</option><option value="5">Nhóm 5</option>
-            </select>
-            <select class="field-control" id="status-filter" aria-label="Lọc theo trạng thái">
-              <option value="">Tất cả trạng thái</option>
-              <option value="Chưa bắt đầu">Chưa bắt đầu</option>
-              <option value="Đang thực hiện">Đang thực hiện</option>
-              <option value="Đang vướng">Đang vướng</option>
-              <option value="Hoàn thành">Hoàn thành</option>
-            </select>
+          <div>
+            <div class="filters">
+              <input class="field-control search" id="search-input" type="search" placeholder="Tìm công việc, người phụ trách…" aria-label="Tìm công việc">
+              <select class="field-control" id="group-filter" aria-label="Lọc theo nhóm">
+                <option value="">Tất cả nhóm</option>
+                <option value="1">Nhóm 1</option><option value="2">Nhóm 2</option><option value="3">Nhóm 3</option>
+                <option value="4">Nhóm 4</option><option value="5">Nhóm 5</option>
+              </select>
+              <select class="field-control" id="status-filter" aria-label="Lọc theo trạng thái">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Chưa bắt đầu">Chưa bắt đầu</option>
+                <option value="Đang thực hiện">Đang thực hiện</option>
+                <option value="Đang vướng">Đang vướng</option>
+                <option value="Hoàn thành">Hoàn thành</option>
+              </select>
+            </div>
+            <div class="card-actions" style="justify-content:flex-end; margin-top:9px">
+              <button class="button small" id="expand-groups" type="button">Mở tất cả nhóm</button>
+              <button class="button small" id="collapse-groups" type="button">Thu gọn</button>
+            </div>
           </div>
         </div>
         <div class="work-list" id="work-list"></div>
@@ -657,6 +686,9 @@
       }
 
       function render() {
+        const openGroups = new Set(
+          [...listEl.querySelectorAll(".task-group[open]")].map(group => group.dataset.group)
+        );
         const query = document.getElementById("search-input").value.trim().toLocaleLowerCase("vi");
         const selectedGroup = document.getElementById("group-filter").value;
         const selectedStatus = document.getElementById("status-filter").value;
@@ -678,7 +710,51 @@
           listEl.innerHTML = '<div class="empty">Không tìm thấy công việc phù hợp.</div>';
           return;
         }
-        listEl.innerHTML = visible.map(task => `
+        const groupNames = {
+          1: "Chuẩn hóa tài liệu và khung năng lực",
+          2: "KPI theo khung FMFT",
+          3: "KPI theo lý thuyết và hướng đi mới",
+          4: "Xây dựng danh mục công việc chuẩn",
+          5: "Đề tài nghiên cứu khoa học cấp Thành phố"
+        };
+        const groupedTasks = new Map();
+        visible.forEach(task => {
+          if (!groupedTasks.has(task.group)) groupedTasks.set(task.group, []);
+          groupedTasks.get(task.group).push(task);
+        });
+        const revealFilteredGroups = Boolean(query || selectedGroup || selectedStatus);
+        listEl.className = "group-list";
+        listEl.innerHTML = [...groupedTasks.entries()].sort(([a], [b]) => a - b).map(([group, groupTasks]) => {
+          const progress = Math.round(groupTasks.reduce((sum, task) => sum + task.progress, 0) / groupTasks.length);
+          const activeCount = groupTasks.filter(task => task.status === "Đang thực hiện").length;
+          const doneCount = groupTasks.filter(task => task.status === "Hoàn thành").length;
+          const blockedCount = groupTasks.filter(task => task.status === "Đang vướng").length;
+          const reportCount = groupTasks.reduce((sum, task) => sum + task.reports.length, 0);
+          const isOpen = openGroups.has(String(group)) || revealFilteredGroups;
+          return `
+          <details class="task-group" data-group="${group}" ${isOpen ? "open" : ""}>
+            <summary class="group-summary">
+              <div class="group-heading">
+                <span class="group-number">${group}</span>
+                <div>
+                  <h3 class="group-title">${escapeHtml(groupNames[group] || `Nhóm ${group}`)}</h3>
+                  <div class="group-subtitle">${groupTasks.length} đầu việc · ${reportCount} ghi chú báo cáo</div>
+                </div>
+              </div>
+              <div class="group-progress">
+                <div class="progress-caption"><span>Tiến độ nhóm</span><strong>${progress}%</strong></div>
+                <div class="progress-track" role="progressbar" aria-label="Tiến độ nhóm ${group}" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-fill" style="width:${progress}%"></div>
+                </div>
+              </div>
+              <div class="group-stats">
+                ${activeCount ? `<span class="status in-progress">${activeCount} đang làm</span>` : ""}
+                ${blockedCount ? `<span class="status blocked">${blockedCount} đang vướng</span>` : ""}
+                <span class="status completed">${doneCount}/${groupTasks.length} hoàn thành</span>
+              </div>
+              <span class="group-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="group-tasks">${groupTasks.map(task => `
           <article class="work-card">
             <div class="work-top">
               <div class="work-main">
@@ -722,7 +798,9 @@
                     </div>`).join("")}
                 </div>` : '<div class="report-empty">Chưa có báo cáo. Chọn “Cập nhật” để thêm ghi chú đầu tiên.</div>'}
             </details>
-          </article>`).join("");
+          </article>`).join("")}</div>
+          </details>`;
+        }).join("");
       }
 
       function openForm(task) {
@@ -763,6 +841,12 @@
       document.addEventListener("keydown", event => { if (event.key === "Escape") closeForm(); });
       ["search-input", "group-filter", "status-filter"].forEach(id => {
         document.getElementById(id).addEventListener(id === "search-input" ? "input" : "change", render);
+      });
+      document.getElementById("expand-groups").addEventListener("click", () => {
+        listEl.querySelectorAll(".task-group").forEach(group => { group.open = true; });
+      });
+      document.getElementById("collapse-groups").addEventListener("click", () => {
+        listEl.querySelectorAll(".task-group").forEach(group => { group.open = false; });
       });
 
       const tasksTab = document.getElementById("tasks-tab");
