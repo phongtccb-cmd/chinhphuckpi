@@ -45,6 +45,14 @@
     .topbar .button { border-color: #52756c; color: white; background: transparent; }
     .topbar .button:hover { background: #245349; }
     .main { width: min(1280px, calc(100% - 36px)); margin: 34px auto 60px; }
+    .view-tabs { display: flex; gap: 7px; margin-bottom: 20px; padding: 5px; border: 1px solid var(--line); border-radius: 11px; background: white; width: fit-content; }
+    .view-tab { min-height: 36px; padding: 0 14px; border: 0; border-radius: 7px; color: var(--muted); background: transparent; font-size: 13px; font-weight: 700; }
+    .view-tab[aria-selected="true"] { color: white; background: var(--green); }
+    .meeting-view { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; }
+    .meeting-view-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 19px; border-bottom: 1px solid var(--line); }
+    .meeting-view-head h2 { margin: 0; font-size: 16px; }
+    .meeting-view-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .meeting-frame { display: block; width: 100%; height: 1250px; border: 0; background: #f9fafb; }
     .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
     .eyebrow { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     h1 { margin: 8px 0 7px; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.04em; }
@@ -158,6 +166,10 @@
       .top-actions .button { min-height: 34px; padding: 0 8px; font-size: 11px; }
       .heading { display: block; }
       .heading .toolbar { margin-top: 15px; }
+      .view-tabs { width: 100%; }
+      .view-tab { flex: 1; padding: 0 9px; font-size: 12px; }
+      .meeting-view-head { align-items: flex-start; flex-direction: column; padding: 14px; }
+      .meeting-frame { height: 1450px; }
       .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; }
       .stat { min-height: 92px; padding: 13px; }
       .stat-value { font-size: 24px; }
@@ -192,6 +204,11 @@
     </header>
 
     <main class="main">
+      <nav class="view-tabs" aria-label="Khu vực dashboard">
+        <button class="view-tab" id="tasks-tab" type="button" aria-selected="true" aria-controls="tasks-view">Công việc</button>
+        <button class="view-tab" id="minutes-tab" type="button" aria-selected="false" aria-controls="minutes-view">Biên bản họp</button>
+      </nav>
+      <div id="tasks-view">
       <section class="heading">
         <div>
           <div class="eyebrow">Bảng điều hành</div>
@@ -247,6 +264,17 @@
         <div class="work-list" id="work-list"></div>
       </section>
       <p class="footer-note">Bản tĩnh phù hợp đưa lên GitHub Pages hoặc Cloudflare Pages. Dữ liệu cập nhật hiện lưu cục bộ trên từng trình duyệt, không tự đồng bộ giữa nhiều người dùng.</p>
+      </div>
+      <section class="meeting-view hidden" id="minutes-view" aria-label="Công cụ biên bản họp">
+        <div class="meeting-view-head">
+          <div>
+            <h2>Công cụ biên bản họp</h2>
+            <p>Tạo, lưu và xuất biên bản họp thành tệp Word. Biên bản được lưu riêng với dữ liệu công việc trên trình duyệt này.</p>
+          </div>
+          <a class="button small" href="bienbanhop/index.html" target="_blank" rel="noopener">Mở riêng công cụ ↗</a>
+        </div>
+        <iframe class="meeting-frame" id="minutes-frame" title="Công cụ tạo và quản lý biên bản họp" data-src="bienbanhop/index.html" loading="lazy"></iframe>
+      </section>
     </main>
   </div>
 
@@ -519,6 +547,24 @@
       ["search-input", "group-filter", "status-filter"].forEach(id => {
         document.getElementById(id).addEventListener(id === "search-input" ? "input" : "change", render);
       });
+
+      const tasksTab = document.getElementById("tasks-tab");
+      const minutesTab = document.getElementById("minutes-tab");
+      const tasksView = document.getElementById("tasks-view");
+      const minutesView = document.getElementById("minutes-view");
+      function showView(view) {
+        const showMinutes = view === "minutes";
+        tasksTab.setAttribute("aria-selected", String(!showMinutes));
+        minutesTab.setAttribute("aria-selected", String(showMinutes));
+        tasksView.classList.toggle("hidden", showMinutes);
+        minutesView.classList.toggle("hidden", !showMinutes);
+        if (showMinutes) {
+          const frame = document.getElementById("minutes-frame");
+          if (!frame.src) frame.src = frame.dataset.src;
+        }
+      }
+      tasksTab.addEventListener("click", () => showView("tasks"));
+      minutesTab.addEventListener("click", () => showView("minutes"));
 
       listEl.addEventListener("click", event => {
         const button = event.target.closest("[data-edit]");
