@@ -727,7 +727,62 @@
           showToast("Không lưu được dữ liệu trên trình duyệt này.");
           return false;
         }
+        pushCloud();
         return true;
+      }
+
+      const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyB4Sqqe4QoDl6Iz66CIBQmyLeFM8By4lJg",
+        authDomain: "chinhphuckpi.firebaseapp.com",
+        projectId: "chinhphuckpi",
+        storageBucket: "chinhphuckpi.firebasestorage.app",
+        messagingSenderId: "870517936115",
+        appId: "1:870517936115:web:929eca25c6d234c0010c86"
+      };
+      const FIREBASE_VERSION = "10.12.2";
+      let cloud = null;
+
+      function pushCloud() {
+        if (!cloud) return;
+        cloud.setDoc(cloud.ref, { tasksJson: JSON.stringify(tasks), updatedAt: new Date().toISOString() })
+          .catch(error => {
+            console.error("Không thể đồng bộ lên Firebase:", error);
+            showToast("Không đồng bộ được lên Firebase. Dữ liệu vẫn lưu trên máy này.");
+          });
+      }
+
+      async function initCloud() {
+        try {
+          const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+          const [{ initializeApp }, { getFirestore, doc, onSnapshot, setDoc }] = await Promise.all([
+            import(`${base}/firebase-app.js`), import(`${base}/firebase-firestore.js`)
+          ]);
+          const ref = doc(getFirestore(initializeApp(FIREBASE_CONFIG)), "dashboard", "main");
+          cloud = { ref, setDoc };
+          onSnapshot(ref, snapshot => {
+            if (snapshot.metadata.hasPendingWrites) return;
+            if (!snapshot.exists()) {
+              pushCloud();
+              return;
+            }
+            try {
+              const parsed = JSON.parse(snapshot.data().tasksJson);
+              if (!Array.isArray(parsed)) throw new Error("Dữ liệu Firebase không phải danh sách.");
+              tasks = trackedTasks(parsed.filter(task => task && typeof task.id === "string").map(normalizeTask));
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } catch (error) { console.error(error); }
+              render();
+            } catch (error) {
+              console.error("Không thể đọc dữ liệu Firebase:", error);
+              showToast("Dữ liệu trên Firebase không hợp lệ.");
+            }
+          }, error => {
+            console.error("Lỗi đồng bộ Firebase:", error);
+            showToast("Không kết nối được Firebase. Kiểm tra Rules của Firestore.");
+          });
+        } catch (error) {
+          console.error("Không thể tải Firebase:", error);
+          showToast("Không tải được Firebase. Đang dùng dữ liệu trên máy.");
+        }
       }
 
       function escapeHtml(value) {
@@ -1102,6 +1157,7 @@
       });
 
       render();
+      initCloud();
     })();
   </script>
 </body>
