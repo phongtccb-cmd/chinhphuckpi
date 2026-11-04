@@ -116,19 +116,17 @@
     .group-layer-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
     .group-layer-content { display: grid; gap: 10px; overflow-y: auto; padding: 15px; }
     .task-item { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: white; }
-    .task-item[open] { border-color: #cbd9d3; }
-    .task-item:not([open]) > .task-item-details { display: none; }
-    .task-item-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(105px, 145px) auto; align-items: center; gap: 14px; padding: 14px 16px; cursor: pointer; list-style: none; }
-    .task-item-summary::-webkit-details-marker { display: none; }
-    .task-item-summary::marker { content: ""; }
+    .task-item.is-expanded { border-color: #cbd9d3; }
+    .task-item-summary { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(105px, 145px) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 0; color: inherit; background: white; cursor: pointer; text-align: left; }
     .task-item-title { margin: 0; font-size: 13px; line-height: 1.45; }
     .task-item-owner { margin-top: 4px; color: var(--muted); font-size: 11px; }
     .task-item-status { display: flex; justify-content: flex-end; }
     .task-item-progress { min-width: 0; }
     .task-item-progress .progress-caption { margin-bottom: 5px; }
     .task-item-chevron { color: var(--muted); transition: transform .18s ease; }
-    .task-item[open] .task-item-chevron { transform: rotate(180deg); }
-    .task-item-details { padding: 0 15px 15px; border-top: 1px solid #f0f3f1; }
+    .task-item.is-expanded .task-item-chevron { transform: rotate(180deg); }
+    .task-item-details { display: none; padding: 0 15px 15px; border-top: 1px solid #f0f3f1; }
+    .task-item.is-expanded .task-item-details { display: block; }
     .task-item-details .work-top { padding-top: 13px; }
     @media (max-width: 600px) {
       .task-item-summary { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px; }
@@ -259,54 +257,7 @@
         <button class="view-tab" id="minutes-tab" type="button" aria-selected="false" aria-controls="minutes-view">Biên bản họp</button>
       </nav>
       <div id="tasks-view">
-      <section class="heading">
-        <div class="toolbar">
-          <button class="button primary" id="add-button" type="button">＋ Thêm công việc</button>
-        </div>
-      </section>
-
-      <section class="stats" aria-label="Tổng quan">
-        <article class="stat">
-          <div class="stat-label">Tổng công việc</div>
-          <div class="stat-bottom"><span class="stat-value" id="stat-total">0</span><span class="stat-icon">≡</span></div>
-        </article>
-        <article class="stat">
-          <div class="stat-label">Đang thực hiện</div>
-          <div class="stat-bottom"><span class="stat-value" id="stat-active">0</span><span class="stat-icon">↗</span></div>
-        </article>
-        <article class="stat">
-          <div class="stat-label">Đã hoàn thành</div>
-          <div class="stat-bottom"><span class="stat-value" id="stat-done">0</span><span class="stat-icon">✓</span></div>
-        </article>
-        <article class="stat">
-          <div class="stat-label">Tiến độ trung bình</div>
-          <div class="stat-bottom"><span class="stat-value" id="stat-progress">0%</span><span class="stat-note">toàn bộ danh mục</span></div>
-        </article>
-      </section>
-
       <section class="panel">
-        <div class="panel-head">
-          <div>
-            <h2 class="panel-title">Danh sách công việc</h2>
-          </div>
-          <div>
-            <div class="filters">
-              <input class="field-control search" id="search-input" type="search" placeholder="Tìm công việc, người phụ trách…" aria-label="Tìm công việc">
-              <select class="field-control" id="group-filter" aria-label="Lọc theo nhóm">
-                <option value="">Tất cả nhóm</option>
-                <option value="1">Nhóm 1</option><option value="2">Nhóm 2</option><option value="3">Nhóm 3</option>
-                <option value="5">Nhóm 4</option>
-              </select>
-              <select class="field-control" id="status-filter" aria-label="Lọc theo trạng thái">
-                <option value="">Tất cả trạng thái</option>
-                <option value="Chưa bắt đầu">Chưa bắt đầu</option>
-                <option value="Đang thực hiện">Đang thực hiện</option>
-                <option value="Đang vướng">Đang vướng</option>
-                <option value="Hoàn thành">Hoàn thành</option>
-              </select>
-            </div>
-          </div>
-        </div>
         <div class="work-list" id="work-list"></div>
       </section>
       </div>
@@ -722,10 +673,10 @@
           : escapeHtml(formatDate(task.due));
       }
 
-      function renderTaskCard(task, isOpen = false) {
+      function renderTaskCard(task, isExpanded = false) {
         return `
-          <details class="task-item" data-task-id="${escapeHtml(task.id)}" ${isOpen ? "open" : ""}>
-            <summary class="task-item-summary">
+          <article class="task-item${isExpanded ? " is-expanded" : ""}" data-task-id="${escapeHtml(task.id)}">
+            <button class="task-item-summary" type="button" data-toggle-task="${escapeHtml(task.id)}" aria-expanded="${isExpanded}" aria-controls="task-details-${escapeHtml(task.id)}">
               <div>
                 <h3 class="task-item-title">${escapeHtml(task.title)}</h3>
                 <div class="task-item-owner">${escapeHtml(task.owner || "Chưa phân công")}</div>
@@ -738,8 +689,8 @@
               </div>
               <div class="task-item-status"><span class="status ${statusClass(task.status)}">${escapeHtml(task.status)}</span></div>
               <span class="task-item-chevron" aria-hidden="true">⌄</span>
-            </summary>
-            <div class="task-item-details">
+            </button>
+            <div class="task-item-details" id="task-details-${escapeHtml(task.id)}">
               <div class="work-top">
                 <div class="work-main">
                   <div class="work-labels">
@@ -776,13 +727,13 @@
                 </div>` : '<div class="report-empty">Chưa có báo cáo. Chọn “Cập nhật” để thêm ghi chú đầu tiên.</div>'}
               </details>
             </div>
-          </details>`;
+          </article>`;
       }
 
       function renderGroupLayer() {
         if (activeGroup === null) return;
         const openTaskIds = new Set(
-          [...groupLayerContent.querySelectorAll(".task-item[open]")].map(item => item.dataset.taskId)
+          [...groupLayerContent.querySelectorAll(".task-item.is-expanded")].map(item => item.dataset.taskId)
         );
         const groupTasks = tasks.filter(task => task.group === activeGroup);
         const title = groupNames[activeGroup] || `Nhóm ${activeGroup}`;
@@ -812,30 +763,14 @@
       }
 
       function render() {
-        const query = document.getElementById("search-input").value.trim().toLocaleLowerCase("vi");
-        const selectedGroup = document.getElementById("group-filter").value;
-        const selectedStatus = document.getElementById("status-filter").value;
-        const visible = tasks.filter(task => {
-          const reportText = task.reports.map(report => `${report.reporter} ${report.note}`).join(" ");
-          const text = `${task.title} ${task.owner} ${task.update} ${task.proposal} ${reportText}`.toLocaleLowerCase("vi");
-          return (!query || text.includes(query))
-            && (!selectedGroup || String(task.group) === selectedGroup)
-            && (!selectedStatus || task.status === selectedStatus);
-        });
-
-        document.getElementById("stat-total").textContent = String(tasks.length);
-        document.getElementById("stat-active").textContent = String(tasks.filter(task => task.status === "Đang thực hiện").length);
-        document.getElementById("stat-done").textContent = String(tasks.filter(task => task.status === "Hoàn thành").length);
-        const average = tasks.length ? Math.round(tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length) : 0;
-        document.getElementById("stat-progress").textContent = `${average}%`;
         renderGroupLayer();
 
-        if (!visible.length) {
-          listEl.innerHTML = '<div class="empty">Không tìm thấy công việc phù hợp.</div>';
+        if (!tasks.length) {
+          listEl.innerHTML = '<div class="empty">Chưa có nhóm công việc để hiển thị.</div>';
           return;
         }
         const groupedTasks = new Map();
-        visible.forEach(task => {
+        tasks.forEach(task => {
           if (!groupedTasks.has(task.group)) groupedTasks.set(task.group, []);
           groupedTasks.get(task.group).push(task);
         });
@@ -905,7 +840,6 @@
         toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2600);
       }
 
-      document.getElementById("add-button").addEventListener("click", () => openForm(null));
       document.getElementById("close-modal").addEventListener("click", closeForm);
       document.getElementById("cancel-button").addEventListener("click", closeForm);
       modal.addEventListener("click", event => { if (event.target === modal) closeForm(); });
@@ -915,9 +849,6 @@
         if (event.key !== "Escape") return;
         if (modal.classList.contains("open")) closeForm();
         else if (!groupLayer.classList.contains("hidden")) closeGroup();
-      });
-      ["search-input", "group-filter", "status-filter"].forEach(id => {
-        document.getElementById(id).addEventListener(id === "search-input" ? "input" : "change", render);
       });
       const tasksTab = document.getElementById("tasks-tab");
       const minutesTab = document.getElementById("minutes-tab");
@@ -950,6 +881,13 @@
       });
 
       groupLayerContent.addEventListener("click", event => {
+        const toggleButton = event.target.closest("[data-toggle-task]");
+        if (toggleButton) {
+          const item = toggleButton.closest(".task-item");
+          const isExpanded = item.classList.toggle("is-expanded");
+          toggleButton.setAttribute("aria-expanded", String(isExpanded));
+          return;
+        }
         const editButton = event.target.closest("[data-edit]");
         if (!editButton) return;
         const task = tasks.find(item => item.id === editButton.dataset.edit);
