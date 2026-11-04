@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biên bản họp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Thư viện JSZip từ CDN -->
+    <script src="vendor/jszip.min.js"></script>
+    
+    <!-- File chứa mã Base64 của file mẫu word -->
+    <script src="mau-bienban.js"></script>
+    
+    <!-- File xử lý xuất file Word -->
+    <script src="bienban-docx.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 p-3 sm:p-6 font-sans antialiased">
+    <div x-data="bienbanApp()" x-init="initApp()" class="max-w-6xl mx-auto bg-white shadow-md rounded-lg p-4 sm:p-8 relative">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4 mb-6">
+            <div>
+                <h1 class="text-xs font-bold text-gray-500 uppercase tracking-wide">Biên bản họp</h1>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">
+                    <span x-text="meeting.title || 'Biên bản họp'"></span>
+                </h2>
+                <p class="text-xs text-gray-500 mt-1">
+                    Số: <span x-text="meeting.so || '...'"></span> · Ngày: <span x-text="formatDate(meeting.date)"></span>
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <button @click="createNewMeeting()" class="px-3 py-1.5 bg-green-50 text-green-700 text-sm font-semibold rounded-md border border-green-200 hover:bg-green-100 flex-1 sm:flex-none text-center">+ Tạo mới</button>
+                <button @click="exportBackup()" title="Tải file sao lưu tất cả biên bản (.json)" class="px-3 py-1.5 text-gray-700 bg-gray-100 text-sm font-semibold rounded-md border hover:bg-gray-200 flex-1 sm:flex-none text-center">⬇ Sao lưu</button>
+                <label title="Khôi phục từ file sao lưu (.json)" class="px-3 py-1.5 text-gray-700 bg-gray-100 text-sm font-semibold rounded-md border hover:bg-gray-200 flex-1 sm:flex-none text-center cursor-pointer">
+                    ⬆ Khôi phục<input type="file" accept=".json,application/json" class="hidden" @change="importBackup($event)">
+                </label>
+                <button @click="showListModal = true" class="px-3 py-1.5 text-gray-700 bg-gray-100 text-sm font-semibold rounded-md border hover:bg-gray-200 flex-1 sm:flex-none text-center">
+                    – Danh sách biên bản (<span x-text="savedList.length"></span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- Ô NHẬP TÊN CUỘC HỌP (TỰ ĐIỀN THÔNG TIN) -->
+        <div class="mb-4 sm:mb-6">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Tên cuộc họp / Trích yếu nội dung <span class="text-red-500">*</span></label>
+            <input type="text" x-model="meeting.title" placeholder="Ví dụ: Đánh giá kết quả công tác tháng 10 và triển khai nhiệm vụ tháng 11..." class="w-full border rounded-md p-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50/30 border-blue-200">
+        </div>
+
+        <!-- Form Thông tin chung -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Số biên bản</label>
+                <input type="text" x-model="meeting.so" placeholder="Ví dụ: 01" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Ngày họp</label>
+                <input type="date" x-model="meeting.date" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Giờ bắt đầu</label>
+                <input type="time" x-model="meeting.start" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Giờ kết thúc</label>
+                <input type="time" x-model="meeting.end" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Địa điểm</label>
+                <input type="text" x-model="meeting.place" placeholder="Phòng họp..." class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Chủ trì (chủ tọa)</label>
+                <input type="text" x-model="meeting.chair" placeholder="Họ và tên, chức vụ" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Thư ký (người ghi biên bản)</label>
+                <input type="text" x-model="meeting.secretary" placeholder="Họ và tên, chức vụ" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="mb-4 sm:mb-6">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Thành phần tham dự (mỗi người một dòng)</label>
+            <textarea x-model="meeting.attendees" rows="3" placeholder="Ông/Bà ..., chức vụ&#10;Ông/Bà ..., chức vụ" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div class="mb-4 sm:mb-6">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Diễn biến chung của cuộc họp</label>
+            <textarea x-model="meeting.summary" rows="3" placeholder="Mục đích, nội dung chính của cuộc họp..." class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <!-- Ý kiến thảo luận -->
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-3 border-b pb-2">Ý kiến thảo luận</h3>
+        
+        <div class="border rounded-md p-3 sm:p-4 mb-4 bg-gray-50 border-gray-200">
+            <template x-for="(item, index) in meeting.items" :key="index">
+                <div class="mb-4 relative bg-white p-3 sm:p-4 border rounded shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-gray-500" x-text="`Ý kiến #${index + 1}`"></span>
+                        <button @click="removeItem(index)" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 border border-red-200 rounded hover:bg-red-50">✕ Xoá</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Người ý kiến</label>
+                        <input type="text" x-model="item.speaker" placeholder="Họ tên, chức vụ" class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nội dung ý kiến</label>
+                        <textarea x-model="item.text" rows="3" placeholder="Ghi nội dung ý kiến..." class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+            </template>
+            <div class="flex justify-end">
+                <button @click="addItem()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#0284c7] text-white font-semibold rounded-md hover:bg-blue-700 text-sm">Thêm ý kiến</button>
+            </div>
+        </div>
+
+        <!-- Kết luận -->
+        <div class="mb-6">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Kết luận của chủ tọa</label>
+            <textarea x-model="meeting.conclusion" rows="3" placeholder="Kết luận cuộc họp, giao nhiệm vụ..." class="w-full border rounded-md p-2.5 sm:p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-4 border-t">
+            <button @click="createNewMeeting()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 border border-red-500 text-red-600 font-semibold rounded-md hover:bg-red-50 text-sm text-center">Xoá trắng form</button>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <button @click="saveMeeting()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#0284c7] text-white font-semibold rounded-md hover:bg-blue-700 text-sm text-center">Lưu biên bản</button>
+                <button @click="downloadDocx()" :disabled="isLoading" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 border border-[#0284c7] text-[#0284c7] font-semibold rounded-md hover:bg-blue-50 text-sm disabled:opacity-50 text-center">
+                    <span x-show="!isLoading">⬇ Tải biên bản (.docx)</span>
+                    <span x-show="isLoading">Đang xử lý...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL DANH SÁCH BIÊN BẢN ĐÃ LƯU -->
+        <div x-show="showListModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-4 sm:p-6 max-h-[85vh] flex flex-col">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Danh sách biên bản đã lưu</h3>
+                    <button @click="showListModal = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">✕</button>
+                </div>
+
+                <div class="overflow-y-auto flex-1">
+                    <template x-if="savedList.length === 0">
+                        <p class="text-center text-gray-500 py-8">Chưa có biên bản nào được lưu.</p>
+                    </template>
+                    <div class="space-y-3">
+                        <template x-for="(item, idx) in savedList" :key="item.id || idx">
+                            <div class="border rounded-lg p-3 sm:p-4 hover:border-blue-400 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-sm sm:text-base">
+                                        <span x-text="item.title || 'Biên bản họp'"></span> (Số <span x-text="item.so || '...' "></span>)
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Ngày họp: <span x-text="formatDate(item.date)"></span> | Chủ trì: <span x-text="item.chair || 'Chưa nhập'"></span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                                    <button @click="loadSavedMeeting(item)" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700">Xem / Sửa</button>
+                                    <button @click="deleteSavedMeeting(item.id)" class="px-3 py-1.5 bg-red-100 text-red-600 text-xs font-semibold rounded hover:bg-red-200">Xoá</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="border-t pt-3 mt-4 flex justify-end">
+                    <button @click="showListModal = false" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded hover:bg-gray-300">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('bienbanApp', () => ({
+                isLoading: false,
+                showListModal: false,
+                savedList: [],
+                meeting: {
+                    id: null,
+                    title: '',
+                    so: '02',
+                    date: new Date().toISOString().split('T')[0],
+                    start: '',
+                    end: '',
+                    place: '',
+                    chair: '',
+                    secretary: '',
+                    attendees: '',
+                    summary: '',
+                    items: [
+                        { speaker: '', text: '' }
+                    ],
+                    conclusion: ''
+                },
+                initApp() {
+                    const data = localStorage.getItem('bienban_saved_list');
+                    if (data) {
+                        try {
+                            this.savedList = JSON.parse(data);
+                        } catch (e) {
+                            this.savedList = [];
+                        }
+                    }
+                },
+                addItem() {
+                    this.meeting.items.push({ speaker: '', text: '' });
+                },
+                removeItem(index) {
+                    this.meeting.items.splice(index, 1);
+                },
+                createNewMeeting() {
+                    this.meeting = {
+                        id: Date.now().toString(),
+                        title: '',
+                        so: '',
+                        date: new Date().toISOString().split('T')[0],
+                        start: '',
+                        end: '',
+                        place: '',
+                        chair: '',
+                        secretary: '',
+                        attendees: '',
+                        summary: '',
+                        items: [{ speaker: '', text: '' }],
+                        conclusion: ''
+                    };
+                },
+                saveMeeting() {
+                    if (!this.meeting.id) {
+                        this.meeting.id = Date.now().toString();
+                    }
+                    const existingIdx = this.savedList.findIndex(item => item.id === this.meeting.id);
+                    if (existingIdx >= 0) {
+                        this.savedList[existingIdx] = JSON.parse(JSON.stringify(this.meeting));
+                    } else {
+                        this.savedList.unshift(JSON.parse(JSON.stringify(this.meeting)));
+                    }
+                    localStorage.setItem('bienban_saved_list', JSON.stringify(this.savedList));
+                    alert('Đã lưu biên bản thành công!');
+                },
+                loadSavedMeeting(item) {
+                    this.meeting = JSON.parse(JSON.stringify(item));
+                    this.showListModal = false;
+                },
+                deleteSavedMeeting(id) {
+                    if (confirm('Bạn có chắc chắn muốn xóa biên bản này?')) {
+                        this.savedList = this.savedList.filter(item => item.id !== id);
+                        localStorage.setItem('bienban_saved_list', JSON.stringify(this.savedList));
+                    }
+                },
+                exportBackup() {
+                    const blob = new Blob([JSON.stringify(this.savedList, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `BienBan_saoluu_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                },
+                async importBackup(event) {
+                    const file = event.target.files[0];
+                    event.target.value = '';
+                    if (!file) return;
+                    try {
+                        const list = JSON.parse(await file.text());
+                        if (!Array.isArray(list)) throw new Error('File không đúng định dạng.');
+                        const ids = new Set(this.savedList.map(item => item.id));
+                        list.filter(item => item && item.id && !ids.has(item.id)).forEach(item => this.savedList.push(item));
+                        localStorage.setItem('bienban_saved_list', JSON.stringify(this.savedList));
+                        alert('Đã khôi phục biên bản từ file sao lưu.');
+                    } catch (error) {
+                        alert('Lỗi khôi phục: ' + error.message);
+                    }
+                },
+                formatDate(dateStr) {
+                    if (!dateStr) return '...';
+                    const parts = dateStr.split('-');
+                    if (parts.length < 3) return dateStr;
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                },
+                async downloadDocx() {
+                    this.isLoading = true;
+                    try {
+                        const blob = await window.buildMinutesDocx(this.meeting);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `BienBan_${this.meeting.so || '00'}.docx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } catch (error) {
+                        alert("Lỗi tạo biên bản: " + error.message);
+                        console.error(error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
