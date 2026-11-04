@@ -96,8 +96,8 @@
     .search { width: 190px; }
     .work-list { display: grid; gap: 12px; padding: 15px; }
     .group-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 15px; }
-    .group-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
-    .group-card:hover { border-color: #b9ccc5; box-shadow: 0 8px 22px rgb(23 75 60 / 8%); transform: translateY(-2px); }
+    .group-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; transition: border-color .15s ease, box-shadow .15s ease; }
+    .group-card:hover { border-color: #b9ccc5; box-shadow: 0 8px 22px rgb(23 75 60 / 8%); }
     .group-card-trigger { display: grid; width: 100%; min-height: 188px; grid-template-columns: 1fr auto; align-content: start; gap: 16px; padding: 19px; border: 0; color: inherit; background: transparent; text-align: left; }
     .group-card-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
     .group-number { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; border-radius: 13px; color: var(--green); background: var(--mint); font-size: 16px; font-weight: 800; }
@@ -114,26 +114,39 @@
     .group-layer-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--line); background: white; }
     .group-layer-head h2 { margin: 0; font-size: 18px; }
     .group-layer-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
-    .group-layer-content { display: grid; gap: 10px; overflow-y: auto; padding: 15px; }
-    .task-item { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: white; }
-    .task-item.is-expanded { border-color: #cbd9d3; }
+    .group-layer-content { display: grid; grid-auto-rows: max-content; align-content: start; gap: 10px; overflow-y: auto; padding: 15px; }
+    .task-item { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: white; transition: border-color .15s ease, box-shadow .15s ease; }
+    .task-item:hover { border-color: #b9ccc5; box-shadow: 0 5px 16px rgb(23 75 60 / 7%); }
     .task-item-summary { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(105px, 145px) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 0; color: inherit; background: white; cursor: pointer; text-align: left; }
     .task-item-title { margin: 0; font-size: 13px; line-height: 1.45; }
     .task-item-owner { margin-top: 4px; color: var(--muted); font-size: 11px; }
     .task-item-status { display: flex; justify-content: flex-end; }
     .task-item-progress { min-width: 0; }
     .task-item-progress .progress-caption { margin-bottom: 5px; }
-    .task-item-chevron { color: var(--muted); transition: transform .18s ease; }
-    .task-item.is-expanded .task-item-chevron { transform: rotate(180deg); }
-    .task-item-details { display: none; padding: 0 15px 15px; border-top: 1px solid #f0f3f1; }
-    .task-item.is-expanded .task-item-details { display: block; }
-    .task-item-details .work-top { padding-top: 13px; }
-    @media (max-width: 600px) {
+    .task-item-chevron { color: var(--muted); font-size: 19px; }
+    .task-layer { position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgb(18 38 33 / 64%); }
+    .task-layer.hidden { display: none; }
+    .task-layer-panel { display: flex; width: min(760px, 100%); max-height: min(92vh, 900px); flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--canvas); box-shadow: 0 24px 80px rgb(0 0 0 / 28%); }
+    .task-layer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--line); background: white; }
+    .task-layer-head h2 { margin: 0; font-size: 18px; line-height: 1.45; }
+    .task-layer-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .task-layer-content { overflow-y: auto; padding: 15px; }
+    .task-detail-card { background: white; }
+    .task-detail-card .work-title { font-size: 17px; }
+    .task-detail-card .progress-block { width: 160px; flex-basis: 160px; }
+    .task-detail-card .work-details { grid-template-columns: 1fr; }
+    .task-detail-card .report-history { margin-top: 14px; }
+    @media (max-width: 760px) {
       .task-item-summary { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px; }
       .task-item-status { grid-column: 1; grid-row: 2; justify-content: flex-start; }
       .task-item-progress { grid-column: 1 / -1; grid-row: 3; }
       .task-item-chevron { grid-column: 2; grid-row: 1; }
-      .task-item-details { padding: 0 10px 10px; }
+      .task-layer { padding: 8px; }
+      .task-layer-panel { max-height: 96vh; border-radius: 12px; }
+      .task-layer-head { padding: 14px; }
+      .task-layer-content { padding: 10px; }
+      .task-detail-card .work-top { flex-direction: column; gap: 13px; }
+      .task-detail-card .progress-block { width: 100%; flex-basis: auto; }
     }
     .work-card { padding: 17px; border: 1px solid var(--line); border-radius: 12px; }
     .work-card:hover { border-color: #c9d8d2; }
@@ -284,6 +297,19 @@
         <button class="icon-button" id="close-group-layer" type="button" aria-label="Đóng danh sách công việc">×</button>
       </header>
       <div class="group-layer-content" id="group-layer-content"></div>
+    </div>
+  </section>
+
+  <section class="task-layer hidden" id="task-layer" role="dialog" aria-modal="true" aria-labelledby="task-layer-title">
+    <div class="task-layer-panel">
+      <header class="task-layer-head">
+        <div>
+          <h2 id="task-layer-title">Chi tiết công việc</h2>
+          <p id="task-layer-summary"></p>
+        </div>
+        <button class="icon-button" id="close-task-layer" type="button" aria-label="Đóng chi tiết công việc">×</button>
+      </header>
+      <div class="task-layer-content" id="task-layer-content"></div>
     </div>
   </section>
 
@@ -538,6 +564,8 @@
       const modal = document.getElementById("modal-backdrop");
       const groupLayer = document.getElementById("group-layer");
       const groupLayerContent = document.getElementById("group-layer-content");
+      const taskLayer = document.getElementById("task-layer");
+      const taskLayerContent = document.getElementById("task-layer-content");
       const groupNames = {
         1: "Chuẩn hóa tài liệu và khung năng lực",
         2: "KPI theo khung FMFT",
@@ -547,6 +575,7 @@
       let tasks = loadTasks();
       let toastTimer;
       let activeGroup = null;
+      let activeTaskId = null;
 
       function loadTasks() {
         try {
@@ -673,10 +702,10 @@
           : escapeHtml(formatDate(task.due));
       }
 
-      function renderTaskCard(task, isExpanded = false) {
+      function renderTaskCard(task) {
         return `
-          <article class="task-item${isExpanded ? " is-expanded" : ""}" data-task-id="${escapeHtml(task.id)}">
-            <button class="task-item-summary" type="button" data-toggle-task="${escapeHtml(task.id)}" aria-expanded="${isExpanded}" aria-controls="task-details-${escapeHtml(task.id)}">
+          <article class="task-item">
+            <button class="task-item-summary" type="button" data-open-task="${escapeHtml(task.id)}" aria-label="Mở chi tiết: ${escapeHtml(task.title)}">
               <div>
                 <h3 class="task-item-title">${escapeHtml(task.title)}</h3>
                 <div class="task-item-owner">${escapeHtml(task.owner || "Chưa phân công")}</div>
@@ -688,32 +717,43 @@
                 </div>
               </div>
               <div class="task-item-status"><span class="status ${statusClass(task.status)}">${escapeHtml(task.status)}</span></div>
-              <span class="task-item-chevron" aria-hidden="true">⌄</span>
+              <span class="task-item-chevron" aria-hidden="true">↗</span>
             </button>
-            <div class="task-item-details" id="task-details-${escapeHtml(task.id)}">
-              <div class="work-top">
-                <div class="work-main">
-                  <div class="work-labels">
-                    <span class="tag">Nhóm ${displayGroupNumber(task.group)}</span>
-                    <span class="status ${statusClass(task.status)}">${escapeHtml(task.status)}</span>
-                  </div>
-                  <p class="work-owner"><strong>Phụ trách:</strong> ${escapeHtml(task.owner || "Chưa phân công")}</p>
+          </article>`;
+      }
+
+      function renderTaskDetails(task) {
+        return `
+          <article class="work-card task-detail-card">
+            <div class="work-top">
+              <div class="work-main">
+                <div class="work-labels">
+                  <span class="tag">Nhóm ${displayGroupNumber(task.group)}</span>
+                  <span class="status ${statusClass(task.status)}">${escapeHtml(task.status)}</span>
                 </div>
-                <div class="card-actions">
-                  <button class="button small" type="button" data-edit="${escapeHtml(task.id)}">Cập nhật</button>
+                <p class="work-owner"><strong>Phụ trách:</strong> ${escapeHtml(task.owner || "Chưa phân công")}</p>
+              </div>
+              <div class="progress-block">
+                <div class="progress-caption"><span>Tiến độ</span><strong>${task.progress}%</strong></div>
+                <div class="progress-track" role="progressbar" aria-label="Tiến độ" aria-valuenow="${task.progress}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-fill" style="width:${task.progress}%"></div>
                 </div>
               </div>
-              <div class="work-meta">
-                <span>Thời hạn: <strong>${dueLabel(task)}</strong></span>
-                <span>Ghi chú báo cáo: <strong>${task.reports.length} lần</strong></span>
-                <span>Đề xuất: <strong>${escapeHtml(task.proposal ? "Đã ghi nhận" : "Chưa có")}</strong></span>
+              <div class="card-actions">
+                <button class="button small" type="button" data-edit="${escapeHtml(task.id)}">Cập nhật</button>
               </div>
-              <div class="work-details">
-                <div class="detail"><div class="detail-label">Nội dung thực hiện</div><div class="detail-text">${escapeHtml(task.update || "Chưa có cập nhật.")}</div></div>
-                <div class="detail"><div class="detail-label">Đề xuất / khó khăn</div><div class="detail-text">${escapeHtml(task.proposal || "Chưa có đề xuất.")}</div></div>
-              </div>
-              <details class="report-history">
-                <summary>Nhật ký báo cáo của nhóm · ${task.reports.length} ghi chú</summary>
+            </div>
+            <div class="work-meta">
+              <span>Thời hạn: <strong>${dueLabel(task)}</strong></span>
+              <span>Ghi chú báo cáo: <strong>${task.reports.length} lần</strong></span>
+              <span>Đề xuất: <strong>${escapeHtml(task.proposal ? "Đã ghi nhận" : "Chưa có")}</strong></span>
+            </div>
+            <div class="work-details">
+              <div class="detail"><div class="detail-label">Nội dung thực hiện</div><div class="detail-text">${escapeHtml(task.update || "Chưa có cập nhật.")}</div></div>
+              <div class="detail"><div class="detail-label">Đề xuất / khó khăn</div><div class="detail-text">${escapeHtml(task.proposal || "Chưa có đề xuất.")}</div></div>
+            </div>
+            <details class="report-history" open>
+              <summary>Nhật ký báo cáo của nhóm · ${task.reports.length} ghi chú</summary>
               ${task.reports.length ? `
                 <div class="report-list">
                   ${[...task.reports].reverse().map(report => `
@@ -725,16 +765,25 @@
                       <div class="report-entry-body">${escapeHtml(report.note)}</div>
                     </div>`).join("")}
                 </div>` : '<div class="report-empty">Chưa có báo cáo. Chọn “Cập nhật” để thêm ghi chú đầu tiên.</div>'}
-              </details>
-            </div>
+            </details>
           </article>`;
+      }
+
+      function renderTaskLayer() {
+        if (activeTaskId === null) return;
+        const task = tasks.find(item => item.id === activeTaskId);
+        if (!task) {
+          closeTask();
+          return;
+        }
+        document.getElementById("task-layer-title").textContent = task.title;
+        document.getElementById("task-layer-summary").textContent =
+          `Nhóm ${displayGroupNumber(task.group)} · ${task.progress}% hoàn thành`;
+        taskLayerContent.innerHTML = renderTaskDetails(task);
       }
 
       function renderGroupLayer() {
         if (activeGroup === null) return;
-        const openTaskIds = new Set(
-          [...groupLayerContent.querySelectorAll(".task-item.is-expanded")].map(item => item.dataset.taskId)
-        );
         const groupTasks = tasks.filter(task => task.group === activeGroup);
         const title = groupNames[activeGroup] || `Nhóm ${activeGroup}`;
         const progress = groupTasks.length
@@ -744,7 +793,7 @@
         document.getElementById("group-layer-summary").textContent =
           `${groupTasks.length} đầu việc · tiến độ nhóm ${progress}%`;
         groupLayerContent.innerHTML = groupTasks.length
-          ? groupTasks.map(task => renderTaskCard(task, openTaskIds.has(task.id))).join("")
+          ? groupTasks.map(task => renderTaskCard(task)).join("")
           : '<div class="empty">Nhóm này hiện không có đầu việc.</div>';
       }
 
@@ -756,7 +805,22 @@
         document.getElementById("close-group-layer").focus();
       }
 
+      function openTask(taskId) {
+        activeTaskId = taskId;
+        renderTaskLayer();
+        taskLayer.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+        document.getElementById("close-task-layer").focus();
+      }
+
+      function closeTask() {
+        taskLayer.classList.add("hidden");
+        activeTaskId = null;
+        if (groupLayer.classList.contains("hidden")) document.body.style.overflow = "";
+      }
+
       function closeGroup() {
+        closeTask();
         groupLayer.classList.add("hidden");
         document.body.style.overflow = "";
         activeGroup = null;
@@ -764,6 +828,7 @@
 
       function render() {
         renderGroupLayer();
+        renderTaskLayer();
 
         if (!tasks.length) {
           listEl.innerHTML = '<div class="empty">Chưa có nhóm công việc để hiển thị.</div>';
@@ -845,15 +910,42 @@
       modal.addEventListener("click", event => { if (event.target === modal) closeForm(); });
       document.getElementById("close-group-layer").addEventListener("click", closeGroup);
       groupLayer.addEventListener("click", event => { if (event.target === groupLayer) closeGroup(); });
+      document.getElementById("close-task-layer").addEventListener("click", closeTask);
+      taskLayer.addEventListener("click", event => { if (event.target === taskLayer) closeTask(); });
       document.addEventListener("keydown", event => {
         if (event.key !== "Escape") return;
         if (modal.classList.contains("open")) closeForm();
+        else if (!taskLayer.classList.contains("hidden")) closeTask();
         else if (!groupLayer.classList.contains("hidden")) closeGroup();
       });
       const tasksTab = document.getElementById("tasks-tab");
       const minutesTab = document.getElementById("minutes-tab");
       const tasksView = document.getElementById("tasks-view");
       const minutesView = document.getElementById("minutes-view");
+      const minutesFrame = document.getElementById("minutes-frame");
+      let minutesFrameObserver = null;
+
+      function resizeMinutesFrame() {
+        const frameDocument = minutesFrame.contentDocument;
+        if (!frameDocument || !frameDocument.documentElement || !frameDocument.body) {
+          console.error("Không thể đọc nội dung khung biên bản để điều chỉnh chiều cao.");
+          return;
+        }
+        const height = Math.max(frameDocument.documentElement.scrollHeight, frameDocument.body.scrollHeight);
+        minutesFrame.style.height = `${height}px`;
+      }
+
+      minutesFrame.addEventListener("load", () => {
+        if (minutesFrameObserver) minutesFrameObserver.disconnect();
+        resizeMinutesFrame();
+        if ("ResizeObserver" in window) {
+          minutesFrameObserver = new ResizeObserver(() => window.requestAnimationFrame(resizeMinutesFrame));
+          minutesFrameObserver.observe(minutesFrame.contentDocument.documentElement);
+          minutesFrameObserver.observe(minutesFrame.contentDocument.body);
+        }
+      });
+      window.addEventListener("resize", resizeMinutesFrame);
+
       function showView(view) {
         const showMinutes = view === "minutes";
         tasksTab.setAttribute("aria-selected", String(!showMinutes));
@@ -861,8 +953,8 @@
         tasksView.classList.toggle("hidden", showMinutes);
         minutesView.classList.toggle("hidden", !showMinutes);
         if (showMinutes) {
-          const frame = document.getElementById("minutes-frame");
-          if (!frame.src) frame.src = frame.dataset.src;
+          if (!minutesFrame.src) minutesFrame.src = minutesFrame.dataset.src;
+          else resizeMinutesFrame();
         }
       }
       tasksTab.addEventListener("click", () => showView("tasks"));
@@ -881,13 +973,18 @@
       });
 
       groupLayerContent.addEventListener("click", event => {
-        const toggleButton = event.target.closest("[data-toggle-task]");
-        if (toggleButton) {
-          const item = toggleButton.closest(".task-item");
-          const isExpanded = item.classList.toggle("is-expanded");
-          toggleButton.setAttribute("aria-expanded", String(isExpanded));
+        const taskButton = event.target.closest("[data-open-task]");
+        if (taskButton) {
+          openTask(taskButton.dataset.openTask);
           return;
         }
+        const editButton = event.target.closest("[data-edit]");
+        if (!editButton) return;
+        const task = tasks.find(item => item.id === editButton.dataset.edit);
+        if (task) openForm(task);
+      });
+
+      taskLayerContent.addEventListener("click", event => {
         const editButton = event.target.closest("[data-edit]");
         if (!editButton) return;
         const task = tasks.find(item => item.id === editButton.dataset.edit);
