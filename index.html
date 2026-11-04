@@ -587,31 +587,23 @@
           const normalized = parsed.filter(task => task && typeof task.id === "string")
             .map(task => normalizeTask(task));
           const oldGroupTasks = normalized.filter(task => /^(?:group|legacy-group)-[1-5]$/.test(task.id));
-          if (oldGroupTasks.length) {
-            const detailedTasks = normalized.some(task => /^g[1-5]-/.test(task.id))
-              ? normalized.filter(task => !oldGroupTasks.includes(task))
-              : [...seedTasks.map(task => ({ ...task })), ...normalized.filter(task => !oldGroupTasks.includes(task))];
-            oldGroupTasks.forEach(oldTask => {
-              const target = detailedTasks.find(task => task.group === oldTask.group);
-              if (!target) return;
-              const marker = "Báo cáo tổng hợp trước khi tách đầu việc";
-              if (target.reports.some(report => report.note.includes(marker))) return;
-              target.reports.push({
-                reporter: `Nhóm ${oldTask.group} · báo cáo tổng hợp trước khi tách đầu việc`,
-                createdAt: "",
-                progress: oldTask.progress,
-                status: oldTask.status,
-                note: [
-                  marker,
-                  `Tiến độ nhóm tại thời điểm lưu: ${oldTask.progress}% · ${oldTask.status}.`,
-                  `Nội dung thực hiện: ${oldTask.update || "Chưa có nội dung."}`,
-                  `Đề xuất: ${oldTask.proposal || "Chưa có đề xuất."}`
-                ].join("\n")
-              });
-            });
-            return trackedTasks(detailedTasks);
+          const hasDetailedTasks = normalized.some(task => /^g[1-5]-/.test(task.id));
+          const tasksWithoutOldGroups = normalized.filter(task => !oldGroupTasks.includes(task));
+          const sourceTasks = oldGroupTasks.length && !hasDetailedTasks
+            ? [...seedTasks.map(task => ({ ...task })), ...tasksWithoutOldGroups]
+            : tasksWithoutOldGroups;
+          const cleanedTasks = trackedTasks(sourceTasks);
+          const removedLegacyData = oldGroupTasks.length > 0
+            || normalized.some(task => task.reports.some(isLegacyReport));
+          if (removedLegacyData) {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedTasks));
+            } catch (error) {
+              console.error("Không thể xóa ghi chú tổng hợp cũ:", error);
+              window.setTimeout(() => showToast("Không thể lưu thay đổi khi xóa ghi chú cũ."), 0);
+            }
           }
-          return trackedTasks(normalized);
+          return cleanedTasks;
         } catch (error) {
           console.error("Không thể đọc dữ liệu dashboard:", error);
           window.setTimeout(() => showToast("Không đọc được dữ liệu lưu. Hãy thử nhập bản sao lưu JSON."), 0);
@@ -620,7 +612,14 @@
       }
 
       function trackedTasks(items) {
-        return items.filter(task => !EXCLUDED_GROUPS.has(Number(task.group)));
+        return items
+          .filter(task => !EXCLUDED_GROUPS.has(Number(task.group)))
+          .map(task => ({ ...task, reports: task.reports.filter(report => !isLegacyReport(report)) }));
+      }
+
+      function isLegacyReport(report) {
+        return report.note.includes("Báo cáo tổng hợp trước khi tách đầu việc")
+          || report.reporter.includes("báo cáo tổng hợp trước khi tách đầu việc");
       }
 
       function normalizeTask(task) {
