@@ -127,6 +127,14 @@
     .detail { min-width: 0; padding: 10px 11px; border-radius: 9px; background: #f7f9f8; }
     .detail-label { margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
     .detail-text { color: #44534f; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .report-history { margin-top: 11px; border: 1px solid #e8eeeb; border-radius: 9px; background: #fbfcfb; }
+    .report-history summary { padding: 10px 12px; color: #42615a; cursor: pointer; font-size: 11px; font-weight: 750; }
+    .report-list { display: grid; gap: 8px; padding: 0 10px 10px; }
+    .report-entry { padding: 10px; border-radius: 8px; background: white; }
+    .report-entry-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 10px; }
+    .report-entry-head strong { color: #465752; font-size: 11px; }
+    .report-entry-body { margin-top: 6px; color: #44534f; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .report-empty { padding: 0 12px 12px; color: var(--muted); font-size: 11px; }
     .empty { padding: 45px 20px; color: var(--muted); text-align: center; font-size: 13px; }
     .footer-note { margin: 14px 3px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
     .modal-backdrop {
@@ -243,7 +251,7 @@
         <div class="panel-head">
           <div>
             <h2 class="panel-title">Danh sách công việc</h2>
-            <p class="panel-desc">Chọn “Cập nhật” để ghi nhận tiến độ, nội dung thực hiện và đề xuất mới nhất.</p>
+            <p class="panel-desc">Đầu việc được tách theo nội dung biên bản; mỗi nhóm có thể ghi tiến độ, đề xuất và nhật ký báo cáo.</p>
           </div>
           <div class="filters">
             <input class="field-control search" id="search-input" type="search" placeholder="Tìm công việc, người phụ trách…" aria-label="Tìm công việc">
@@ -326,6 +334,14 @@
           <label for="work-proposal">Đề xuất / khó khăn cần hỗ trợ</label>
           <textarea id="work-proposal" maxlength="2000" placeholder="Nêu đề xuất, nội dung vướng mắc hoặc ghi “Chưa có”."></textarea>
         </div>
+        <div class="form-field full">
+          <label for="work-reporter">Người/nhóm gửi báo cáo</label>
+          <input id="work-reporter" maxlength="180" placeholder="Mặc định theo nhóm phụ trách">
+        </div>
+        <div class="form-field full">
+          <label for="work-report">Ghi chú báo cáo mới</label>
+          <textarea id="work-report" maxlength="2000" placeholder="Ghi nhận kết quả, mốc đã đạt, minh chứng hoặc nội dung cần phối hợp. Mỗi lần lưu sẽ thêm một ghi chú có ngày và tiến độ."></textarea>
+        </div>
         <div class="form-actions">
           <button class="button danger hidden" id="delete-button" type="button">Xóa công việc</button>
           <div style="display:flex; gap:8px; margin-left:auto">
@@ -344,39 +360,175 @@
       const STORAGE_KEY = "thuduc-kpi-dashboard-v1";
       const seedTasks = [
         {
-          id: "group-1", group: 1, title: "Xây dựng bộ KPI theo vị trí việc làm",
+          id: "g1-strategy", group: 1, title: "Rà soát chiến lược Bệnh viện và kế hoạch công tác năm 2026",
+          owner: "Nhóm 1 · Phối hợp KHTH", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Chiến lược Bệnh viện giai đoạn 2025–2030 đã được xây dựng; rà soát tình trạng kế hoạch năm 2026.",
+          proposal: "Đề xuất nội dung với KHTH và tham mưu Ban Giám đốc ban hành."
+        },
+        {
+          id: "g1-functions", group: 1, title: "Chuẩn hóa quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu Khoa/Phòng",
+          owner: "Nguyễn Đình Thìn, Lê Thiện Phúc, Nguyễn Thị Anh Đào", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Xây dựng bộ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của các Khoa/Phòng.",
+          proposal: "Thống nhất mẫu tài liệu và rà soát với các đơn vị liên quan."
+        },
+        {
+          id: "g1-jobs", group: 1, title: "Hoàn thiện bản mô tả công việc",
+          owner: "Quốc Trị, Trần Quốc Tuấn", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Chuẩn hóa bản mô tả công việc theo nhiệm vụ và vị trí việc làm.",
+          proposal: "Đối chiếu với chức năng, nhiệm vụ của từng Khoa/Phòng."
+        },
+        {
+          id: "g1-competencies", group: 1, title: "Xây dựng khung năng lực Khoa/Phòng và vị trí việc làm",
+          owner: "Trần Quốc Tuấn, Master Tới, Bích Ân", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Xây dựng khung năng lực cho Khoa/Phòng và từng vị trí việc làm.",
+          proposal: "Áp dụng prompt hướng dẫn mới theo phân công của nhóm."
+        },
+        {
+          id: "g1-procedures", group: 1, title: "Chuẩn hóa quy trình",
+          owner: "Huỳnh Mỹ Thư, Trần Thị Bích Bo", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Rà soát và chuẩn hóa các quy trình cần thiết cho khung quản trị công việc và KPI.",
+          proposal: "Phối hợp các Khoa/Phòng để bảo đảm quy trình có thể áp dụng thực tế."
+        },
+        {
+          id: "g1-org-chart", group: 1, title: "Cập nhật sơ đồ tổ chức Bệnh viện",
+          owner: "Nguyễn Đình Thìn", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Hoàn thiện sơ đồ tổ chức Bệnh viện theo cơ cấu được thống nhất.",
+          proposal: "Đối chiếu với quy định chức năng, nhiệm vụ và cơ cấu Khoa/Phòng."
+        },
+        {
+          id: "g1-issue-framework", group: 1, title: "Tổng hợp, góp ý và trình ban hành khung FMFT",
           owner: "Nhóm 1 · Thìn, Phúc, Đào, Thư, Bo, Trị, Tới, Tuấn, Bích Ân",
-          due: "2026-11-01", status: "Đang thực hiện", progress: 0,
-          update: "Rà soát chức năng, nhiệm vụ, vị trí việc làm và sản phẩm công việc; phối hợp nghiên cứu, thống nhất bộ chỉ số KPI.",
-          proposal: "Làm việc với Thầy Đỗ Đình Công; kiểm chứng bộ KPI với các khoa, phòng, cơ sở."
+          due: "2026-11-01", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Tổng hợp bộ tài liệu chuẩn, khung năng lực và các cấu phần FMFT của Bệnh viện, Khoa/Phòng và vị trí việc làm.",
+          proposal: "Kế hoạch họp: hoàn tất trong 30 ngày đến 16/10; dự thảo góp ý 16–30/10; dự kiến ban hành 01/11/2026."
         },
         {
-          id: "group-2", group: 2, title: "Triển khai KPI kết hợp FMFT tại các đơn vị thí điểm",
+          id: "g2-pilot", group: 2, title: "Tiếp tục thí điểm KPI theo FMFT tại 03 đơn vị",
+          owner: "Huỳnh Mỹ Thư, Phạm Thị Phương Thủy, Huỳnh Tấn Đạt, Linh Đức",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Duy trì thí điểm tại QLCL, CĐHA và Ngoại TH.",
+          proposal: "Ghi nhận kết quả, khó khăn và nội dung cần điều chỉnh từ từng đơn vị."
+        },
+        {
+          id: "g2-standardize", group: 2, title: "Chuẩn hóa nhiệm vụ, sản phẩm và tiêu chí KPI trên FMFT",
           owner: "Nhóm 2 · Huỳnh Mỹ Thư, Phạm Thị Phương Thủy, Huỳnh Tấn Đạt, Linh Đức",
-          due: "", status: "Chưa bắt đầu", progress: 0,
-          update: "Tiếp tục thí điểm tại QLCL, CĐHA, Ngoại TH; chuẩn hóa nhiệm vụ, sản phẩm và tiêu chí trên FMFT.",
-          proposal: "Mở rộng theo lộ trình đến 49 khoa/phòng; xây dựng Dashboard."
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Rà soát nhiệm vụ, sản phẩm công việc và tiêu chí đánh giá đang áp dụng trên FMFT.",
+          proposal: "Làm rõ mối liên hệ giữa sản phẩm công việc, KPI và kết quả thực tế."
         },
         {
-          id: "group-3", group: 3, title: "Thí điểm xây dựng KPI độc lập, không sử dụng FMFT",
+          id: "g2-rollout", group: 2, title: "Lập phương án mở rộng KPI/FMFT đến 49 Khoa/Phòng",
+          owner: "Nhóm 2 · Huỳnh Mỹ Thư, Phạm Thị Phương Thủy, Huỳnh Tấn Đạt, Linh Đức",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Chuẩn bị phương án mở rộng phạm vi áp dụng trên toàn Bệnh viện.",
+          proposal: "Xác định lộ trình triển khai phù hợp với đặc thù từng đơn vị."
+        },
+        {
+          id: "g2-dashboard", group: 2, title: "Xây dựng Dashboard theo dõi KPI/FMFT",
+          owner: "Nhóm 2 · Phối hợp Phòng CNTT", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Thiết kế Dashboard phục vụ theo dõi và tổng hợp kết quả KPI.",
+          proposal: "Thống nhất các trường dữ liệu và nhu cầu báo cáo với các nhóm."
+        },
+        {
+          id: "g2-evaluate", group: 2, title: "Tổng hợp đánh giá thí điểm và đề xuất điều chỉnh",
+          owner: "Nhóm 2 · Huỳnh Mỹ Thư, Phạm Thị Phương Thủy, Huỳnh Tấn Đạt, Linh Đức",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Theo dõi thuận lợi, khó khăn và mức độ phản ánh kết quả thực tế của phương thức FMFT kết hợp KPI.",
+          proposal: "Tổng hợp làm căn cứ hoàn thiện phương pháp đánh giá."
+        },
+        {
+          id: "g3-strategy", group: 3, title: "Tổ chức họp xây dựng chiến lược và liên kết KPI",
+          owner: "Huỳnh Mỹ Thư, Lâm Ngọc Minh Thành, Nguyễn Võ Minh Hoàng, Nguyễn Hồng Phúc, Trần Thị Bích Bo",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Tổ chức các buổi làm việc để xây dựng chiến lược và xác định KPI đi theo chiến lược.",
+          proposal: "Thống nhất nội dung, thành phần tham gia và tài liệu đầu vào cho từng buổi."
+        },
+        {
+          id: "g3-kpi-design", group: 3, title: "Xây dựng bộ KPI độc lập theo chiến lược",
           owner: "Nhóm 3 · Huỳnh Mỹ Thư, Lâm Ngọc Minh Thành, Nguyễn Võ Minh Hoàng, Nguyễn Hồng Phúc, Trần Thị Bích Bo",
-          due: "", status: "Chưa bắt đầu", progress: 0,
-          update: "Xây dựng danh mục sản phẩm công việc, chỉ số KPI, tiêu chí, trọng số, tiến độ và minh chứng; tổ chức họp xây dựng chiến lược.",
-          proposal: "Dùng ChatGPT hỗ trợ xây dựng KPI; tổng hợp tính khả thi, khó khăn và đề xuất hoàn thiện."
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Thí điểm xây dựng KPI không gắn với khung FMFT.",
+          proposal: "Dùng ChatGPT hỗ trợ xây dựng và rà soát bộ KPI."
         },
         {
-          id: "group-4", group: 4, title: "Xây dựng danh mục sản phẩm công việc chuẩn toàn Bệnh viện",
-          owner: "Nhóm 4 · Thìn, Đào, Tuấn, Minh Hoàng, Linh Đức, Thiện Phúc, CNTT (Đỗ Văn Thuận)",
-          due: "2026-09-15", status: "Chưa bắt đầu", progress: 0,
-          update: "Thực hiện theo Hướng dẫn 06; lập danh mục sản phẩm công việc Quý III và Quý IV; tham mưu phê duyệt và giao nhiệm vụ hằng quý.",
-          proposal: "Thời gian thực hiện dự kiến 06 tháng. Cần hoàn thiện bộ nguyên tắc, biểu mẫu và cơ sở dữ liệu theo dõi."
+          id: "g3-measures", group: 3, title: "Xác định chỉ số, tiêu chí, trọng số và minh chứng",
+          owner: "Nhóm 3 · Huỳnh Mỹ Thư, Lâm Ngọc Minh Thành, Nguyễn Võ Minh Hoàng, Nguyễn Hồng Phúc, Trần Thị Bích Bo",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Xác định danh mục sản phẩm công việc, chỉ số KPI, tiêu chí đánh giá, trọng số, tiến độ và minh chứng.",
+          proposal: "Bảo đảm kết quả có thể kiểm đếm và đối chiếu."
         },
         {
-          id: "group-5", group: 5, title: "Chuẩn bị đề tài nghiên cứu khoa học cấp Thành phố",
-          owner: "Nhóm 5 · Huỳnh Mỹ Thư, Nguyễn Võ Minh Hoàng, Nguyễn Đình Thìn, Trần Thị Bích Ân, Linh Đức, Thanh Tới",
-          due: "", status: "Chưa bắt đầu", progress: 0,
-          update: "Đề tài: Ứng dụng và đánh giá hiệu quả quy trình chuẩn xây KPI – FMFT tại các bệnh viện hạng I, hạng II trên địa bàn TP. Hồ Chí Minh.",
-          proposal: "Bổ sung thành viên Tổ KPI và thống nhất kế hoạch triển khai nghiên cứu."
+          id: "g3-pilot", group: 3, title: "Thử nghiệm và đánh giá phương thức KPI không dùng FMFT",
+          owner: "Nhóm 3 · Huỳnh Mỹ Thư, Lâm Ngọc Minh Thành, Nguyễn Võ Minh Hoàng, Nguyễn Hồng Phúc, Trần Thị Bích Bo",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Theo dõi đầu ra thực tế và đánh giá tính khả thi, phù hợp, minh bạch của phương thức KPI độc lập.",
+          proposal: "Tổng hợp khó khăn, bất cập và đề xuất phương án áp dụng."
+        },
+        {
+          id: "g4-guidance", group: 4, title: "Xây dựng hướng dẫn danh mục sản phẩm công việc theo Hướng dẫn 06",
+          owner: "Nguyễn Đình Thìn, Nguyễn Thị Anh Đào, Trần Quốc Tuấn, Minh Hoàng, Linh Đức, Lê Thiện Phúc, Phòng CNTT",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Xác định yêu cầu, nguyên tắc và cách triển khai danh mục sản phẩm công việc chuẩn.",
+          proposal: "Danh mục phải phù hợp vị trí việc làm, có đầu ra kiểm đếm được, theo dõi tiến độ và có minh chứng."
+        },
+        {
+          id: "g4-q3", group: 4, title: "Hoàn thiện danh mục sản phẩm công việc và đánh giá Quý III",
+          owner: "Nhóm 4 · Nguyễn Đình Thìn, Nguyễn Thị Anh Đào, Trần Quốc Tuấn, Minh Hoàng, Linh Đức, Lê Thiện Phúc, Phòng CNTT",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Rà soát danh mục sản phẩm công việc Quý III và kết quả đánh giá Quý III.",
+          proposal: "Theo biên bản, đây là nhiệm vụ cần thực hiện trong tuần họp."
+        },
+        {
+          id: "g4-q4", group: 4, title: "Lập danh mục sản phẩm công việc Quý IV",
+          owner: "Nhóm 4 · Nguyễn Đình Thìn, Nguyễn Thị Anh Đào, Trần Quốc Tuấn, Minh Hoàng, Linh Đức, Lê Thiện Phúc, Phòng CNTT",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Xây dựng danh mục sản phẩm công việc Quý IV.",
+          proposal: "Theo biên bản, dự kiến hoàn thiện trong tuần sau buổi họp."
+        },
+        {
+          id: "g4-principles-forms", group: 4, title: "Soạn bộ nguyên tắc, định nghĩa, hướng dẫn và biểu mẫu",
+          owner: "Nhóm 4 · Phối hợp Tổ KPI", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Chuẩn bị bộ nguyên tắc và bộ biểu mẫu danh mục sản phẩm công việc chuẩn.",
+          proposal: "Hoàn thành trước khi triển khai danh mục tại các đơn vị."
+        },
+        {
+          id: "g4-collect", group: 4, title: "Thu thập danh mục của Ban Giám đốc và cá nhân các đơn vị",
+          owner: "Nhóm 4 · Phối hợp Ban Giám đốc, Khoa/Phòng, cơ sở", due: "2026-09-07",
+          status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Thu thập danh mục sản phẩm công việc của Ban Giám đốc và cá nhân tại các Khoa/Phòng, cơ sở.",
+          proposal: "Phụ lục ghi hạn nộp danh mục cá nhân trước 16g00 ngày 07/9/2026."
+        },
+        {
+          id: "g4-review", group: 4, title: "Rà soát hệ số độ khó và lập biên bản thẩm định",
+          owner: "Nhóm chuyên trách Tổ KPI", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Tổng hợp, rà soát hệ số độ khó và ghi nhận kết quả thẩm định theo từng đợt.",
+          proposal: "Xác định hệ số 100%, 110% hoặc 120% thống nhất tại thời điểm giao việc."
+        },
+        {
+          id: "g4-approve", group: 4, title: "Trình phê duyệt danh mục chuẩn toàn Bệnh viện",
+          owner: "Nhóm 4 · Tham mưu Tổ KPI và Ban Giám đốc", due: "2026-09-15",
+          status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Hoàn thiện và trình Giám đốc phê duyệt Danh mục sản phẩm công việc chuẩn toàn Bệnh viện.",
+          proposal: "Phụ lục ghi thời hạn trình phê duyệt trước ngày 15/9/2026."
+        },
+        {
+          id: "g4-database", group: 4, title: "Thiết lập cơ sở dữ liệu theo dõi danh mục và kết quả",
+          owner: "Nhóm 4 · Phòng CNTT (Đỗ Văn Thuận) phối hợp", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Chuẩn bị cơ sở dữ liệu để lưu trữ, truy xuất và theo dõi danh mục cùng kết quả thực hiện.",
+          proposal: "Bảo đảm dữ liệu có thể sử dụng liên tục cho đánh giá các quý tiếp theo."
+        },
+        {
+          id: "g4-quarterly", group: 4, title: "Tham mưu phê duyệt và giao nhiệm vụ hằng quý",
+          owner: "Nhóm 4 · Tham mưu Ban Giám đốc", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Tham mưu phê duyệt danh mục và quyết định giao nhiệm vụ định kỳ hằng quý.",
+          proposal: "Bảo đảm danh mục được cập nhật theo kế hoạch công tác của đơn vị."
+        },
+        {
+          id: "g5-research", group: 5, title: "Hoàn thiện nhóm và đề cương đề tài nghiên cứu cấp Thành phố",
+          owner: "Huỳnh Mỹ Thư, Nguyễn Võ Minh Hoàng, Nguyễn Đình Thìn, Trần Thị Bích Ân, Linh Đức, Thanh Tới",
+          due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
+          update: "Đề tài: Ứng dụng và đánh giá hiệu quả quy trình chuẩn xây KPI – FMFT tại các bệnh viện hạng I, hạng II trên địa bàn Thành phố Hồ Chí Minh.",
+          proposal: "Bổ sung thành viên Tổ KPI và thống nhất đề cương, kế hoạch nghiên cứu."
         }
       ];
 
@@ -392,19 +544,58 @@
           if (!saved) return seedTasks.map(task => ({ ...task }));
           const parsed = JSON.parse(saved);
           if (!Array.isArray(parsed)) throw new Error("Dữ liệu lưu không phải danh sách.");
-          return parsed.filter(task => task && typeof task.id === "string")
-            .map(task => ({
-              id: task.id, group: Number(task.group) || 1, title: String(task.title || ""),
-              owner: String(task.owner || ""), due: String(task.due || ""),
-              status: validStatus(task.status) ? task.status : "Chưa bắt đầu",
-              progress: clampProgress(task.progress), update: String(task.update || ""),
-              proposal: String(task.proposal || "")
-            }));
+          const normalized = parsed.filter(task => task && typeof task.id === "string")
+            .map(task => normalizeTask(task));
+          const oldGroupTasks = normalized.filter(task => /^(?:group|legacy-group)-[1-5]$/.test(task.id));
+          if (oldGroupTasks.length) {
+            const detailedTasks = normalized.some(task => /^g[1-5]-/.test(task.id))
+              ? normalized.filter(task => !oldGroupTasks.includes(task))
+              : [...seedTasks.map(task => ({ ...task })), ...normalized.filter(task => !oldGroupTasks.includes(task))];
+            oldGroupTasks.forEach(oldTask => {
+              const target = detailedTasks.find(task => task.group === oldTask.group);
+              if (!target) return;
+              const marker = "Báo cáo tổng hợp trước khi tách đầu việc";
+              if (target.reports.some(report => report.note.includes(marker))) return;
+              target.reports.push({
+                reporter: `Nhóm ${oldTask.group} · báo cáo tổng hợp trước khi tách đầu việc`,
+                createdAt: "",
+                progress: oldTask.progress,
+                status: oldTask.status,
+                note: [
+                  marker,
+                  `Tiến độ nhóm tại thời điểm lưu: ${oldTask.progress}% · ${oldTask.status}.`,
+                  `Nội dung thực hiện: ${oldTask.update || "Chưa có nội dung."}`,
+                  `Đề xuất: ${oldTask.proposal || "Chưa có đề xuất."}`
+                ].join("\n")
+              });
+            });
+            return detailedTasks;
+          }
+          return normalized;
         } catch (error) {
           console.error("Không thể đọc dữ liệu dashboard:", error);
           window.setTimeout(() => showToast("Không đọc được dữ liệu lưu. Hãy thử nhập bản sao lưu JSON."), 0);
           return seedTasks.map(task => ({ ...task }));
         }
+      }
+
+      function normalizeTask(task) {
+        return {
+          id: task.id, group: Math.min(5, Math.max(1, Number(task.group) || 1)),
+          title: String(task.title || ""), owner: String(task.owner || ""),
+          due: String(task.due || ""), status: validStatus(task.status) ? task.status : "Chưa bắt đầu",
+          progress: clampProgress(task.progress), update: String(task.update || ""),
+          proposal: String(task.proposal || ""),
+          reports: Array.isArray(task.reports) ? task.reports.filter(report =>
+            report && typeof report === "object" && String(report.note || "").trim()
+          ).map(report => ({
+            reporter: String(report.reporter || task.owner || ""),
+            createdAt: String(report.createdAt || ""),
+            progress: clampProgress(report.progress),
+            status: validStatus(report.status) ? report.status : "Chưa bắt đầu",
+            note: String(report.note || "")
+          })) : []
+        };
       }
 
       function validStatus(value) {
@@ -439,6 +630,15 @@
         return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
       }
 
+      function formatReportDate(value) {
+        if (!value) return "Ngày chưa xác định";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return escapeHtml(value);
+        return new Intl.DateTimeFormat("vi-VN", {
+          dateStyle: "short", timeStyle: "short"
+        }).format(date);
+      }
+
       function statusClass(status) {
         return {
           "Chưa bắt đầu": "not-started", "Đang thực hiện": "in-progress",
@@ -461,7 +661,8 @@
         const selectedGroup = document.getElementById("group-filter").value;
         const selectedStatus = document.getElementById("status-filter").value;
         const visible = tasks.filter(task => {
-          const text = `${task.title} ${task.owner} ${task.update} ${task.proposal}`.toLocaleLowerCase("vi");
+          const reportText = task.reports.map(report => `${report.reporter} ${report.note}`).join(" ");
+          const text = `${task.title} ${task.owner} ${task.update} ${task.proposal} ${reportText}`.toLocaleLowerCase("vi");
           return (!query || text.includes(query))
             && (!selectedGroup || String(task.group) === selectedGroup)
             && (!selectedStatus || task.status === selectedStatus);
@@ -500,13 +701,27 @@
             </div>
             <div class="work-meta">
               <span>Thời hạn: <strong>${dueLabel(task)}</strong></span>
-              <span>Cập nhật: <strong>${escapeHtml(task.update ? "Đã có nội dung" : "Chưa cập nhật")}</strong></span>
+              <span>Ghi chú báo cáo: <strong>${task.reports.length} lần</strong></span>
               <span>Đề xuất: <strong>${escapeHtml(task.proposal ? "Đã ghi nhận" : "Chưa có")}</strong></span>
             </div>
             <div class="work-details">
               <div class="detail"><div class="detail-label">Nội dung thực hiện</div><div class="detail-text">${escapeHtml(task.update || "Chưa có cập nhật.")}</div></div>
               <div class="detail"><div class="detail-label">Đề xuất / khó khăn</div><div class="detail-text">${escapeHtml(task.proposal || "Chưa có đề xuất.")}</div></div>
             </div>
+            <details class="report-history">
+              <summary>Nhật ký báo cáo của nhóm · ${task.reports.length} ghi chú</summary>
+              ${task.reports.length ? `
+                <div class="report-list">
+                  ${[...task.reports].reverse().map(report => `
+                    <div class="report-entry">
+                      <div class="report-entry-head">
+                        <strong>${escapeHtml(report.reporter || task.owner || "Nhóm thực hiện")}</strong>
+                        <span>${formatReportDate(report.createdAt)} · ${report.progress}% · ${escapeHtml(report.status)}</span>
+                      </div>
+                      <div class="report-entry-body">${escapeHtml(report.note)}</div>
+                    </div>`).join("")}
+                </div>` : '<div class="report-empty">Chưa có báo cáo. Chọn “Cập nhật” để thêm ghi chú đầu tiên.</div>'}
+            </details>
           </article>`).join("");
       }
 
@@ -522,6 +737,8 @@
         document.getElementById("work-progress").value = task ? task.progress : 0;
         document.getElementById("work-update").value = task ? task.update : "";
         document.getElementById("work-proposal").value = task ? task.proposal : "";
+        document.getElementById("work-reporter").value = task ? task.owner : "";
+        document.getElementById("work-report").value = "";
         document.getElementById("delete-button").classList.toggle("hidden", !task);
         modal.classList.add("open");
         document.getElementById("work-title").focus();
@@ -587,15 +804,23 @@
           due: document.getElementById("work-due").value,
           status, progress,
           update: document.getElementById("work-update").value.trim(),
-          proposal: document.getElementById("work-proposal").value.trim()
+          proposal: document.getElementById("work-proposal").value.trim(),
+          reports: id ? [...(tasks.find(task => task.id === id)?.reports || [])] : []
         };
+        const reportNote = document.getElementById("work-report").value.trim();
+        if (reportNote) {
+          record.reports.push({
+            reporter: document.getElementById("work-reporter").value.trim() || record.owner || `Nhóm ${record.group}`,
+            createdAt: new Date().toISOString(), progress, status, note: reportNote
+          });
+        }
         const index = tasks.findIndex(task => task.id === id);
         if (index >= 0) tasks[index] = record;
         else tasks.unshift(record);
         if (!persist()) return;
         closeForm();
         render();
-        showToast("Đã lưu cập nhật công việc.");
+        showToast(reportNote ? "Đã lưu công việc và ghi chú báo cáo." : "Đã lưu cập nhật công việc.");
       });
 
       document.getElementById("delete-button").addEventListener("click", () => {
@@ -631,11 +856,11 @@
             || Number(task.progress) < 0 || Number(task.progress) > 100
           )) throw new Error("Tệp phải là danh sách công việc JSON hợp lệ.");
           tasks = parsed.map(task => ({
-            id: String(task.id || `task-${Date.now()}-${Math.random()}`),
-            group: Math.min(5, Math.max(1, Number(task.group) || 1)),
-            title: task.title.trim(), owner: String(task.owner || ""), due: String(task.due || ""),
-            status: task.status, progress: clampProgress(task.progress),
-            update: String(task.update || ""), proposal: String(task.proposal || "")
+            ...normalizeTask({
+              ...task,
+              id: String(task.id || `task-${Date.now()}-${Math.random()}`),
+              title: task.title.trim()
+            })
           }));
           if (!persist()) return;
           render();
