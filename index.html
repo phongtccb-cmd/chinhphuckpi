@@ -464,6 +464,7 @@
       "use strict";
       const STORAGE_KEY = "thuduc-kpi-dashboard-v1";
       const EXCLUDED_GROUPS = new Set([4]);
+      const EXCLUDED_TASK_IDS = new Set(["g1-org-chart"]);
       const seedTasks = [
         {
           id: "g1-strategy", group: 1, title: "Rà soát chiến lược Bệnh viện và kế hoạch công tác năm 2026",
@@ -494,12 +495,6 @@
           owner: "Huỳnh Mỹ Thư, Trần Thị Bích Bo", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
           update: "Rà soát và chuẩn hóa các quy trình cần thiết cho khung quản trị công việc và KPI.",
           proposal: "Phối hợp các Khoa/Phòng để bảo đảm quy trình có thể áp dụng thực tế."
-        },
-        {
-          id: "g1-org-chart", group: 1, title: "Cập nhật sơ đồ tổ chức Bệnh viện",
-          owner: "Nguyễn Đình Thìn", due: "", status: "Chưa bắt đầu", progress: 0, reports: [],
-          update: "Hoàn thiện sơ đồ tổ chức Bệnh viện theo cơ cấu được thống nhất.",
-          proposal: "Đối chiếu với quy định chức năng, nhiệm vụ và cơ cấu Khoa/Phòng."
         },
         {
           id: "g1-issue-framework", group: 1, title: "Tổng hợp, góp ý và trình ban hành khung FMFT",
@@ -691,7 +686,7 @@
 
       function trackedTasks(items) {
         return items
-          .filter(task => !EXCLUDED_GROUPS.has(Number(task.group)))
+          .filter(task => !EXCLUDED_GROUPS.has(Number(task.group)) && !EXCLUDED_TASK_IDS.has(task.id))
           .map(task => ({ ...task, reports: task.reports.filter(report => !isLegacyReport(report)) }));
       }
 
