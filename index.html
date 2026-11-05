@@ -95,29 +95,32 @@
     .field-control:focus, textarea:focus { border-color: #80ae9e; box-shadow: 0 0 0 3px #eaf4ef; }
     .search { width: 190px; }
     .work-list { display: grid; gap: 12px; padding: 15px; }
-    .group-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 15px; }
+    .group-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));     gap: 10px; padding: 12px; }
     .group-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; transition: border-color .15s ease, box-shadow .15s ease; }
     .group-card:hover { border-color: #b9ccc5; box-shadow: 0 8px 22px rgb(23 75 60 / 8%); }
-    .group-card-trigger { display: grid; width: 100%; min-height: 188px; grid-template-columns: 1fr auto; align-content: start; gap: 16px; padding: 19px; border: 0; color: inherit; background: transparent; text-align: left; }
+    .group-card-trigger { display: grid; width: 100%; min-height: 0; grid-template-columns: 1fr auto; align-content: start; gap: 10px; padding: 14px 16px; border: 0; color: inherit; background: transparent; text-align: left; }
     .group-card-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
-    .group-number { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; border-radius: 13px; color: var(--green); background: var(--mint); font-size: 16px; font-weight: 800; }
+    .group-number { width: 34px; height: 34px; display: grid; flex: 0 0 34px; place-items: center; border-radius: 13px; color: var(--green); background: var(--mint); font-size: 16px; font-weight: 800; }
     .group-title { margin: 0; font-size: 15px; line-height: 1.45; }
     .group-subtitle { margin-top: 4px; color: var(--muted); font-size: 11px; }
     .group-card-arrow { align-self: center; color: var(--green); font-size: 20px; }
     .group-progress { grid-column: 1 / -1; }
     .group-progress .progress-caption { margin-bottom: 7px; }
     .group-stats { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-    .group-open-hint { grid-column: 1 / -1; margin-top: auto; color: var(--green); font-size: 11px; font-weight: 700; }
+    .group-open-hint { display: none; grid-column: 1 / -1; margin-top: auto; color: var(--green); font-size: 11px; font-weight: 700; }
     .group-layer { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgb(18 38 33 / 55%); }
     .group-layer.hidden { display: none; }
     .group-layer-panel { display: flex; width: min(1050px, 100%); max-height: min(92vh, 1050px); flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--canvas); box-shadow: 0 24px 80px rgb(0 0 0 / 25%); }
     .group-layer-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--line); background: white; }
     .group-layer-head h2 { margin: 0; font-size: 18px; }
     .group-layer-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
-    .group-layer-content { display: grid; grid-auto-rows: max-content; align-content: start; gap: 10px; overflow-y: auto; padding: 15px; }
-    .task-item { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: white; transition: border-color .15s ease, box-shadow .15s ease; }
+    .group-layer-content { display: grid; grid-auto-rows: max-content;     align-content: start; gap: 6px; overflow-y: auto; padding: 15px; }
+        .task-item { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; transition: border-color .15s ease, box-shadow .15s ease; }
+    .task-item:nth-child(3n+2) { background: #f2f8f5; }
+    .task-item:nth-child(3n) { background: #f4f5fb; }
+    .task-item-num { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 8px; color: var(--green); background: var(--mint); font-size: 12px; font-weight: 800; }
     .task-item:hover { border-color: #b9ccc5; box-shadow: 0 5px 16px rgb(23 75 60 / 7%); }
-    .task-item-summary { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(105px, 145px) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 0; color: inherit; background: white; cursor: pointer; text-align: left; }
+    .task-item-summary { display: grid; width: 100%; grid-template-columns: 30px minmax(0, 1fr) minmax(100px, 140px) auto auto; align-items: center; gap: 12px; padding: 10px 14px; border: 0; color: inherit; background: transparent; cursor: pointer; text-align: left; }
     .task-item-title { margin: 0; font-size: 13px; line-height: 1.45; }
     .task-item-owner { margin-top: 4px; color: var(--muted); font-size: 11px; }
     .task-item-status { display: flex; justify-content: flex-end; }
@@ -137,10 +140,12 @@
     .task-detail-card .work-details { grid-template-columns: 1fr; }
     .task-detail-card .report-history { margin-top: 14px; }
     @media (max-width: 760px) {
-      .task-item-summary { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px; }
-      .task-item-status { grid-column: 1; grid-row: 2; justify-content: flex-start; }
-      .task-item-progress { grid-column: 1 / -1; grid-row: 3; }
-      .task-item-chevron { grid-column: 2; grid-row: 1; }
+      .task-item-summary { grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px 10px; padding: 10px; }
+            .task-item-num { grid-column: 1; grid-row: 1; }
+            .task-item-title-wrap { grid-column: 2; grid-row: 1; }
+            .task-item-chevron { grid-column: 3; grid-row: 1; }
+            .task-item-status { grid-column: 2 / -1; grid-row: 2; justify-content: flex-start; }
+            .task-item-progress { grid-column: 1 / -1; grid-row: 3; }
       .task-layer { padding: 8px; }
       .task-layer-panel { max-height: 96vh; border-radius: 12px; }
       .task-layer-head { padding: 14px; }
@@ -841,11 +846,12 @@
           : escapeHtml(formatDate(task.due));
       }
 
-      function renderTaskCard(task) {
+      function renderTaskCard(task, index) {
         return `
           <article class="task-item">
             <button class="task-item-summary" type="button" data-open-task="${escapeHtml(task.id)}" aria-label="Mở chi tiết: ${escapeHtml(task.title)}">
-              <div>
+              <span class="task-item-num" aria-hidden="true">${index + 1}</span>
+              <div class="task-item-title-wrap">
                 <h3 class="task-item-title">${escapeHtml(task.title)}</h3>
                 <div class="task-item-owner">${escapeHtml(task.owner || "Chưa phân công")}</div>
               </div>
@@ -932,7 +938,7 @@
         document.getElementById("group-layer-summary").textContent =
           `${groupTasks.length} đầu việc · tiến độ nhóm ${progress}%`;
         groupLayerContent.innerHTML = groupTasks.length
-          ? groupTasks.map(task => renderTaskCard(task)).join("")
+          ? groupTasks.map((task, index) => renderTaskCard(task, index)).join("")
           : '<div class="empty">Nhóm này hiện không có đầu việc.</div>';
       }
 
