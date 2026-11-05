@@ -140,12 +140,14 @@
     .task-detail-card .work-details { grid-template-columns: 1fr; }
     .task-detail-card .report-history { margin-top: 14px; }
     @media (max-width: 760px) {
-      .task-item-summary { grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px 10px; padding: 10px; }
-            .task-item-num { grid-column: 1; grid-row: 1; }
-            .task-item-title-wrap { grid-column: 2; grid-row: 1; }
-            .task-item-chevron { grid-column: 3; grid-row: 1; }
-            .task-item-status { grid-column: 2 / -1; grid-row: 2; justify-content: flex-start; }
-            .task-item-progress { grid-column: 1 / -1; grid-row: 3; }
+      .task-item-summary { grid-template-columns: 22px minmax(0, 1fr) 88px; gap: 4px 8px; padding: 7px 9px; }
+            .task-item-num { grid-column: 1; grid-row: 1 / 3; align-self: start; width: 22px; height: 22px; font-size: 11px; border-radius: 7px; }
+            .task-item-title-wrap { grid-column: 2 / -1; grid-row: 1; }
+            .task-item-chevron { display: none; }
+            .task-item-status { grid-column: 2; grid-row: 2; justify-content: flex-start; }
+            .task-item-status .status { padding: 2px 7px; font-size: 10px; }
+            .task-item-progress { grid-column: 3; grid-row: 2; }
+            .task-item-progress .progress-caption { margin-bottom: 2px; font-size: 10px; }
       .task-layer { padding: 8px; }
       .task-layer-panel { max-height: 96vh; border-radius: 12px; }
       .task-layer-head { padding: 14px; }
@@ -264,11 +266,11 @@
       .view-tabs { gap: 4px; margin-bottom: 12px; padding: 4px; border-radius: 10px; }
       .view-tab { min-height: 44px; padding: 0 7px; font-size: 12px; }
       .panel { border-radius: 12px; }
-      .group-list { gap: 9px; padding: 8px; }
+      .group-list { gap: 6px; padding: 6px; }
       .group-card { border-radius: 12px; }
-      .group-card-trigger { min-height: 0; gap: 12px; padding: 14px; }
+      .group-card-trigger { min-height: 0; gap: 8px; padding: 10px 12px; }
       .group-card-heading { gap: 10px; }
-      .group-number { width: 38px; height: 38px; flex-basis: 38px; border-radius: 11px; font-size: 15px; }
+      .group-number { width: 30px; height: 30px; flex-basis: 30px; border-radius: 9px; font-size: 14px; }
       .group-title { font-size: 14px; line-height: 1.4; }
       .group-subtitle { font-size: 11px; line-height: 1.4; }
       .group-open-hint { margin-top: 0; }
@@ -283,12 +285,12 @@
       }
       .group-layer-head h2, .task-layer-head h2 { font-size: 16px; }
       .group-layer-content, .task-layer-content { min-height: 0; flex: 1; overscroll-behavior: contain; }
-      .group-layer-content { padding: 9px; }
+      .group-layer-content { gap: 4px; padding: 6px; }
       .task-layer-content { padding: 10px; }
-      .task-item { border-radius: 10px; }
-      .task-item-summary { min-height: 44px; padding: 11px; }
-      .task-item-title { font-size: 13px; }
-      .task-item-owner { line-height: 1.4; }
+      .task-item { border-radius: 9px; }
+      .task-item-summary { min-height: 0; }
+      .task-item-title { font-size: 13px; line-height: 1.3; }
+      .task-item-owner { display: none; }
       .task-layer-head p { font-size: 11px; }
       .task-detail-card { padding: 12px; border-radius: 10px; }
       .task-detail-card .work-title { font-size: 16px; }
