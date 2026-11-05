@@ -320,6 +320,11 @@
 </head>
 <body>
   <div class="shell">
+    <style>
+      .sync-status { margin-left: auto; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #eef2f7; color: #475569; white-space: nowrap; }
+      .sync-status.ok { background: #dcfce7; color: #166534; }
+      .sync-status.error { background: #fee2e2; color: #991b1b; }
+    </style>
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark">KPI</div>
@@ -328,6 +333,7 @@
           <div class="brand-sub">Bệnh viện Đa khoa Thủ Đức · Cổng theo dõi công việc</div>
         </div>
       </div>
+      <span id="sync-status" class="sync-status" role="status">Đang kết nối…</span>
     </header>
 
     <main class="main">
@@ -742,10 +748,19 @@
       const FIREBASE_VERSION = "10.12.2";
       let cloud = null;
 
+      function setSync(state, text) {
+        const el = document.getElementById("sync-status");
+        el.className = `sync-status ${state}`;
+        el.textContent = text;
+      }
+
       function pushCloud() {
         if (!cloud) return;
+        setSync("", "Đang đồng bộ…");
         cloud.setDoc(cloud.ref, { tasksJson: JSON.stringify(tasks), updatedAt: new Date().toISOString() })
+          .then(() => setSync("ok", "Đã đồng bộ"))
           .catch(error => {
+            setSync("error", "Chưa đồng bộ");
             console.error("Không thể đồng bộ lên Firebase:", error);
             showToast("Không đồng bộ được lên Firebase. Dữ liệu vẫn lưu trên máy này.");
           });
@@ -761,6 +776,7 @@
           cloud = { ref, setDoc };
           onSnapshot(ref, snapshot => {
             if (snapshot.metadata.hasPendingWrites) return;
+            if (!snapshot.metadata.fromCache) setSync("ok", "Đã đồng bộ");
             if (!snapshot.exists()) {
               pushCloud();
               return;
@@ -776,10 +792,12 @@
               showToast("Dữ liệu trên Firebase không hợp lệ.");
             }
           }, error => {
+            setSync("error", "Chưa đồng bộ");
             console.error("Lỗi đồng bộ Firebase:", error);
             showToast("Không kết nối được Firebase. Kiểm tra Rules của Firestore.");
           });
         } catch (error) {
+          setSync("error", "Chưa đồng bộ");
           console.error("Không thể tải Firebase:", error);
           showToast("Không tải được Firebase. Đang dùng dữ liệu trên máy.");
         }
